@@ -1,0 +1,2 @@
+<fx:root type="de.mknblch.eqmap.common.ColorChooser" fx:controller="de.mknblch.eqmap.common.ColorChooser" xmlns:fx="http://javafx.com/fxml">
+</fx:root>
