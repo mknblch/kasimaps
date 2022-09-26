@@ -1,15 +1,14 @@
 package de.mknblch.eqmap
 
 import de.mknblch.eqmap.common.ColorChooser
+import de.mknblch.eqmap.common.OriginalTransformer
+import de.mknblch.eqmap.common.ZColorTransformer
 import de.mknblch.eqmap.config.FxmlResource
 import de.mknblch.eqmap.config.ZoneMap
 import javafx.application.Platform
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
-import javafx.scene.control.CheckMenuItem
-import javafx.scene.control.Menu
-import javafx.scene.control.MenuBar
-import javafx.scene.control.MenuItem
+import javafx.scene.control.*
 import javafx.stage.Stage
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ConfigurableApplicationContext
@@ -51,6 +50,9 @@ class MapController : Initializable {
     lateinit var lockWindowMenuItem: CheckMenuItem
 
     @FXML
+    lateinit var colorGroup: ToggleGroup
+
+    @FXML
     private lateinit var transparentWindow: CheckMenuItem
 
     private var xOffset: Double = 0.0
@@ -83,6 +85,17 @@ class MapController : Initializable {
 
     }
 
+    @FXML
+    fun setZColorTransformer() {
+        mapPane.setColorTransformer(ZColorTransformer(30))
+    }
+
+    @FXML
+    fun setOriginalTransformer() {
+
+        mapPane.setColorTransformer(OriginalTransformer)
+    }
+
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         populateZoneMenu()
@@ -102,6 +115,11 @@ class MapController : Initializable {
         colorChooser.chosenColorProperty().addListener { _,_,v ->
             mapPane.deriveColor(v)
         }
+
+        colorGroup.selectedToggleProperty().addListener { _, _, v ->
+            println(v)
+        }
+
     }
 
     private fun populateZoneMenu() {

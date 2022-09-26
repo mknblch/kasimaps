@@ -1,15 +1,15 @@
 package de.mknblch.eqmap.common
 
+import de.mknblch.eqmap.common.ColorTransformer.Companion.generatePalette
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyObjectProperty
 import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.value.ObservableValue
 import javafx.event.EventHandler
 import javafx.geometry.Bounds
 import javafx.geometry.Insets
-import javafx.scene.control.*
-import javafx.scene.input.MouseEvent
+import javafx.scene.control.Button
+import javafx.scene.control.Control
 import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
@@ -19,15 +19,7 @@ import javafx.scene.shape.Rectangle
 import kotlin.math.max
 import kotlin.math.min
 
-fun generatePalette(): List<Color> {
-    val size = 6
-    val d = 300.0 / (size * size)
-    return (0..size * size).map { i ->
-        Color.hsb(i * d, 1.0, 0.5)
-    }
-}
-
-internal class ColorChooser @JvmOverloads constructor(colors: List<Color> = generatePalette()) : VBox() {
+internal class ColorChooser @JvmOverloads constructor(colors: List<Color> = generatePalette(30, offset = 190.0)) : VBox() {
     private val GOLDEN_RATIO = 1.618
     private val MIN_TILE_SIZE = 3.0
     private val nColumns: Double

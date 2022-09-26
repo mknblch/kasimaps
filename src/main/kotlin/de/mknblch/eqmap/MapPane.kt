@@ -1,5 +1,7 @@
 package de.mknblch.eqmap
 
+import de.mknblch.eqmap.common.ColorTransformer
+import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.config.ZoneMap
 import de.mknblch.eqmap.map.Arrow
 import de.mknblch.eqmap.map.MapLine
@@ -27,7 +29,7 @@ import kotlin.math.sign
 @Component
 class MapPane : ScrollPane() {
 
-    private var cursor = Arrow(0.0, 0.0, 10.0, Color.BLUEVIOLET)
+    private var cursor = Arrow(0.0, 0.0, 12.0, Color.BLUEVIOLET)
     private var mouseAnchorX: Double = 0.0
     private var mouseAnchorY: Double = 0.0
     private var initialTranslateX: Double = 0.0
@@ -36,20 +38,27 @@ class MapPane : ScrollPane() {
     private lateinit var group: Group
     private lateinit var enclosure: Pane
     private val strokeWidthProperty = SimpleDoubleProperty(1.0)
+    private var colorTransformer: ColorTransformer = OriginalTransformer
 
     val zViewDistance = SimpleDoubleProperty(35.0)
     val useZLayerViewDistance : SimpleBooleanProperty = SimpleBooleanProperty(true)
     val centerPlayerCursor : SimpleBooleanProperty = SimpleBooleanProperty(true)
 
-
     fun setMapContent(map: ZoneMap) {
         cursor.isVisible = false
         this.map = map
         content = prepare(map)
+        layout()
         showAllNodes()
+        resetColor(colorTransformer)
         centerMap()
         zoomToBounds()
         layout()
+    }
+
+    fun setColorTransformer(colorTransformer: ColorTransformer) {
+        this.colorTransformer = colorTransformer
+        resetColor(colorTransformer)
     }
 
     fun centerMap() {
@@ -87,15 +96,21 @@ class MapPane : ScrollPane() {
 
     fun deriveColor(newColor: Color) {
         if (!this::map.isInitialized) return
+        resetColor(colorTransformer)
         map.elements.forEach {
-
             when (it) {
-                is MapLine -> it.stroke = it.color.deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
-                is MapPOI -> it.text.fill = it.color.deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
+                is MapLine -> it.stroke = (it.stroke as Color).deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
+                is MapPOI -> it.text.fill = (it.text.fill as Color).deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
             }
 
         }
         cursor.fill = cursor.color.deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
+    }
+
+
+    fun resetColor(colorTransformer: ColorTransformer) {
+        if (!this::map.isInitialized) return
+        colorTransformer.apply(map.elements)
     }
 
     fun showAllNodes() {

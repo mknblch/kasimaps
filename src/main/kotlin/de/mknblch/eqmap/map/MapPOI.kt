@@ -11,7 +11,7 @@ data class MapPOI(
     val x: Double,
     val y: Double,
     val z: Double,
-    val color: Color,
+    override val color: Color,
     val type: Int,
     val name: String,
     val circle: Circle = Circle(x - POI_SIZE / 2.0, y - POI_SIZE / 2.0, POI_SIZE.toDouble()).also {

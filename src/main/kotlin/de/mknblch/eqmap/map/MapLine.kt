@@ -13,7 +13,7 @@ data class MapLine(
     val x2: Double,
     val y2: Double,
     val z2: Double,
-    val color: Color,
+    override val color: Color,
     override val zRange: ClosedRange<Double> = (min(z1, z2)..max(z1, z2))
 ) : Line(x1, y1, x2, y2), MapObject {
     constructor(vararg line: String) : this(

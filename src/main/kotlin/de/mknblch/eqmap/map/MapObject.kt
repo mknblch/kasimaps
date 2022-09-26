@@ -1,8 +1,11 @@
 package de.mknblch.eqmap.map
 
 import javafx.scene.Node
+import javafx.scene.paint.Color
 
 interface MapObject {
+
+    val color: Color
 
     val zRange: ClosedRange<Double>
 
