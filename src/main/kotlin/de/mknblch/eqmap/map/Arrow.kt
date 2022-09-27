@@ -1,5 +1,6 @@
 package de.mknblch.eqmap.map
 
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
 import javafx.scene.effect.Lighting
 import kotlin.jvm.JvmOverloads
@@ -15,12 +16,14 @@ import kotlin.math.sqrt
 class Arrow @JvmOverloads constructor(
     var x1: Double,
     var y1: Double,
-    val size: Double = 10.0,
+    var size: Double = 10.0,
     val color: Color
 ) : Path() {
 
     private var x2: Double = x1
     private var y2: Double = y1 + size
+
+    val sizeProperty: SimpleDoubleProperty = SimpleDoubleProperty(size)
 
     fun getPosition(): Point2D {
         return Point2D(x2, y2)
@@ -30,28 +33,35 @@ class Arrow @JvmOverloads constructor(
         if (position.x == x2 && y2 == position.y) {
             return
         }
-
         x1 = x2
         y1 = y2
         x2 = position.x
         y2 = position.y
+        draw()
+    }
+
+    private fun draw() {
         elements.clear()
         elements.add(MoveTo(x2, y2))
         val angle = atan2(y2 - y1, x2 - x1) - Math.PI / 2.0
         val sin = sin(angle)
         val cos = cos(angle)
-        val x1 = (-1.0 / 3 * cos + sqrt32 * sin) * size + x2
-        val y1 = (-1.0 / 3 * sin - sqrt32 * cos) * size + y2
-        val x2 = (1.0 / 3 * cos + sqrt32 * sin) * size + x2
-        val y2 = (1.0 / 3 * sin - sqrt32 * cos) * size + y2
+        val s = sizeProperty.get().coerceAtLeast(1.0) * size
+        val x1 = (-1.0 / 3 * cos + sqrt32 * sin) * s + x2
+        val y1 = (-1.0 / 3 * sin - sqrt32 * cos) * s + y2
+        val x2 = (1.0 / 3 * cos + sqrt32 * sin) * s + x2
+        val y2 = (1.0 / 3 * sin - sqrt32 * cos) * s + y2
         elements.add(LineTo(x1, y1))
         elements.add(LineTo(x2, y2))
         elements.add(LineTo(this.x2, this.y2))
     }
 
     init {
-        strokeProperty().bind(fillProperty())
+        sizeProperty.addListener { _, _, _ ->
+            draw()
+        }
         fill = color
+        stroke = color.darker()
         effect = Lighting()
     }
     companion object {

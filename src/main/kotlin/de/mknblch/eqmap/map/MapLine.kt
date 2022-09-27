@@ -2,7 +2,6 @@ package de.mknblch.eqmap.map
 
 import javafx.scene.paint.Color
 import javafx.scene.shape.Line
-import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 
@@ -36,10 +35,10 @@ data class MapLine(
     }
 
     override fun show() {
-        stroke = color
+        opacity = 1.0
     }
 
     override fun hide() {
-        stroke = Color.TRANSPARENT
+        opacity = 0.0
     }
 }

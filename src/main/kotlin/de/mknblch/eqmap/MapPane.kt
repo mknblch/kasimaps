@@ -7,6 +7,8 @@ import de.mknblch.eqmap.map.Arrow
 import de.mknblch.eqmap.map.MapLine
 import de.mknblch.eqmap.map.MapObject
 import de.mknblch.eqmap.map.MapPOI
+import javafx.beans.property.BooleanProperty
+import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
@@ -21,11 +23,16 @@ import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Line
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
+import javax.annotation.PostConstruct
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
 
+@Lazy
 @Component
 class MapPane : ScrollPane() {
 
@@ -37,12 +44,29 @@ class MapPane : ScrollPane() {
     private lateinit var map: ZoneMap
     private lateinit var group: Group
     private lateinit var enclosure: Pane
-    private val strokeWidthProperty = SimpleDoubleProperty(1.0)
+
     private var colorTransformer: ColorTransformer = OriginalTransformer
 
-    val zViewDistance = SimpleDoubleProperty(35.0)
-    val useZLayerViewDistance : SimpleBooleanProperty = SimpleBooleanProperty(true)
-    val centerPlayerCursor : SimpleBooleanProperty = SimpleBooleanProperty(true)
+    @Qualifier("zViewDistance")
+    @Autowired
+    private lateinit var  zViewDistance: DoubleProperty
+
+    @Qualifier("strokeWidthProperty")
+    @Autowired
+    private lateinit var  strokeWidthProperty: DoubleProperty
+
+    @Qualifier("useZLayerViewDistance")
+    @Autowired
+    private lateinit var  useZLayerViewDistance : BooleanProperty
+
+    @Qualifier("centerPlayerCursor")
+    @Autowired
+    private lateinit var  centerPlayerCursor : BooleanProperty
+
+    @PostConstruct
+    fun init() {
+        println("initializing")
+    }
 
     fun setMapContent(map: ZoneMap) {
         cursor.isVisible = false
@@ -150,7 +174,6 @@ class MapPane : ScrollPane() {
         group = Group(*map.toTypedArray(), cursor)
         // register properties on elements
         registerNodeProperties()
-
         // background for moving and scaling
         enclosure = Pane(group)
         with(enclosure) {
@@ -180,7 +203,8 @@ class MapPane : ScrollPane() {
     }
 
     private fun registerNodeProperties() {
-        cursor.strokeWidthProperty()?.bind(strokeWidthProperty)
+//        cursor.strokeWidthProperty()?.bind(strokeWidthProperty)
+        cursor.sizeProperty.bind(strokeWidthProperty)
         map.elements.forEach { node ->
             // increase stroke width when zooming out
             (node as? Line)?.strokeWidthProperty()?.bind(strokeWidthProperty)

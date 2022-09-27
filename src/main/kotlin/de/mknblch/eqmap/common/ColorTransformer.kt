@@ -19,8 +19,9 @@ interface ColorTransformer {
             offset: Double = 0.0,
             width: Double = 360.0,
             saturation: Double = 0.9,
-            brightness: Double = 0.9
+            brightness: Double = 0.9,
         ): List<Color> {
+
             val d = width / size
             return (0 until size).map { i ->
                 Color.hsb(((i * d) + offset) % width, saturation, brightness)
@@ -34,7 +35,6 @@ interface ColorTransformer {
             }
         }
     }
-
 }
 
 object OriginalTransformer : ColorTransformer {
@@ -52,11 +52,11 @@ class ZColorTransformer(
     private val palette = generatePalette(paletteSize)
 
     override fun apply(objects: Collection<MapObject>) {
-        val minZ: Double = objects.minOf { min(it.zRange.start, it.zRange.endInclusive) }
-        val maxZ: Double = objects.maxOf { min(it.zRange.start, it.zRange.endInclusive) }
+        val minZ: Double = objects.filterIsInstance<MapLine>().minOf { min(it.zRange.start, it.zRange.endInclusive) }
+        val maxZ: Double = objects.filterIsInstance<MapLine>().maxOf { min(it.zRange.start, it.zRange.endInclusive) }
         objects.forEach {
             val v = (palette.size - 1) * (min(it.zRange.start, it.zRange.endInclusive) - minZ) / (maxZ - minZ)
-            val color = palette[v.toInt()]
+            val color = palette[v.toInt().coerceIn(0, palette.size - 1)]
             colorizeNode(it, color)
         }
     }

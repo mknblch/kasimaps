@@ -5,7 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox fx:id="vBox" cacheShape="false" centerShape="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" scaleShape="false" xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="vBox" cacheShape="false" centerShape="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" scaleShape="false" xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.mknblch.eqmap.MapController">
     <MenuBar fx:id="menuBar">
         <menus>
             <Menu fx:id="appMenu" mnemonicParsing="false" text="App">
@@ -16,10 +16,11 @@
             <Menu fx:id="zoneMenu" mnemonicParsing="false" styleClass="custom-context-menu" text="Zone" />
             <Menu fx:id="optionsMenu" mnemonicParsing="false" text="Options">
                 <items>
-                    <CheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
-                    <CheckMenuItem fx:id="zLayerCheckMenuItem" mnemonicParsing="false" selected="true" text="Filter Z-Layer" />
                     <CheckMenuItem fx:id="lockWindowMenuItem" mnemonicParsing="false" text="Lock Window" />
                     <CheckMenuItem fx:id="transparentWindow" mnemonicParsing="false" text="Transparent Window" />
+               <CheckMenuItem mnemonicParsing="false" text="Show POI" />
+                    <CheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
+                    <CheckMenuItem fx:id="zLayerCheckMenuItem" mnemonicParsing="false" selected="true" text="Filter Z-Layer" />
                <Menu mnemonicParsing="false" text="Color">
                  <items>
                      <RadioMenuItem mnemonicParsing="false" onAction="#setOriginalTransformer" selected="true" text="Original">

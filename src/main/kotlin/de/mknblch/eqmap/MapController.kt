@@ -6,19 +6,28 @@ import de.mknblch.eqmap.common.ZColorTransformer
 import de.mknblch.eqmap.config.FxmlResource
 import de.mknblch.eqmap.config.ZoneMap
 import javafx.application.Platform
+import javafx.beans.property.BooleanProperty
+import javafx.beans.property.DoubleProperty
+import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
+import javafx.scene.layout.Background
+import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.event.EventListener
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
 import java.net.URL
 import java.util.*
+import javax.annotation.PreDestroy
 
 
-@Controller
+@Component
 @FxmlResource("fxml/Map.fxml")
 class MapController : Initializable {
 
@@ -50,10 +59,15 @@ class MapController : Initializable {
     lateinit var lockWindowMenuItem: CheckMenuItem
 
     @FXML
-    lateinit var colorGroup: ToggleGroup
-
-    @FXML
     private lateinit var transparentWindow: CheckMenuItem
+
+    @Qualifier("useZLayerViewDistance")
+    @Autowired
+    private lateinit var  useZLayerViewDistance : SimpleBooleanProperty
+
+    @Qualifier("centerPlayerCursor")
+    @Autowired
+    private lateinit var  centerPlayerCursor : SimpleBooleanProperty
 
     private var xOffset: Double = 0.0
     private var yOffset: Double = 0.0
@@ -101,9 +115,9 @@ class MapController : Initializable {
         populateZoneMenu()
         menuBar.opacity = 1.0
         // register properties
-        mapPane.centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
-        mapPane.useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
-        mapPane.useZLayerViewDistance.addListener { _,_,_ ->
+        centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
+        useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
+        useZLayerViewDistance.addListener { _,_,_ ->
             mapPane.showAllNodes()
         }
         val primaryStage: Stage = context.getBean("primaryStage") as Stage
@@ -115,11 +129,12 @@ class MapController : Initializable {
         colorChooser.chosenColorProperty().addListener { _,_,v ->
             mapPane.deriveColor(v)
         }
-
-        colorGroup.selectedToggleProperty().addListener { _, _, v ->
-            println(v)
+        lockWindowMenuItem.selectedProperty().addListener { _, _, newValue ->
+            primaryStage.isAlwaysOnTop = newValue
         }
 
+        mapPane.background = Background.fill(Color.TRANSPARENT)
+        mapPane.showAllNodes()
     }
 
     private fun populateZoneMenu() {
@@ -160,10 +175,13 @@ class MapController : Initializable {
         }
     }
 
+    @PreDestroy
+    fun destroy() {
+        Platform.exit()
+    }
 
     @FXML
     fun exit() {
         context.close()
-        Platform.exit()
     }
 }

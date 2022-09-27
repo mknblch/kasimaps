@@ -32,14 +32,12 @@ data class MapPOI(
     )
 
     override fun show() {
-        circle.stroke = color
-        circle.fill = color
-        text.fill = Color.BLACK
+        circle.opacity = 1.0
+        text.opacity = 1.0
     }
 
     override fun hide() {
-        circle.stroke = Color.TRANSPARENT
-        circle.fill = Color.TRANSPARENT
-        text.fill = Color.TRANSPARENT
+        circle.opacity = 0.0
+        text.opacity = 0.0
     }
 }

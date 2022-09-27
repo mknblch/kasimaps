@@ -3,29 +3,33 @@ package de.mknblch.eqmap
 import de.mknblch.eqmap.config.SpringFXMLLoader
 import javafx.application.Application
 import javafx.application.Platform
+import javafx.beans.property.BooleanProperty
+import javafx.beans.property.DoubleProperty
 import javafx.scene.Scene
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import javafx.stage.StageStyle
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.CommandLineRunner
+import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.context.ConfigurableApplicationContext
+import javax.annotation.PreDestroy
 
 
 @SpringBootApplication
-class FXApplication : Application() {
+class FXApplication : CommandLineRunner {
 
+    @Autowired
     private lateinit var context: ConfigurableApplicationContext
 
-    override fun init() {
+    @Autowired
+    private lateinit var loader: SpringFXMLLoader
 
-        context = SpringApplicationBuilder()
-            .sources(FXApplication::class.java)
-            .run(*parameters.raw.toTypedArray())
-    }
-
-    override fun start(stage: Stage) {
-        val loader = context.getBean(SpringFXMLLoader::class.java)
+    fun start() {
+        val stage = Stage(StageStyle.TRANSPARENT)
         context.beanFactory.registerSingleton("primaryStage", stage)
         val (root, mapController) = loader.load(MapController::class.java)
         val scene = Scene(root, 800.0, 600.0, Color.TRANSPARENT)
@@ -37,18 +41,19 @@ class FXApplication : Application() {
 
         ResizeHelper.addResizeListener(mapController.lockWindowMenuItem.selectedProperty(), stage)
 
-        mapController.lockWindowMenuItem.selectedProperty().addListener { _, _, newValue ->
-            stage.isAlwaysOnTop = newValue
-        }
     }
 
-    override fun stop() {
-        context.close()
+    @PreDestroy
+    fun stop() {
         Platform.exit()
+    }
+
+    override fun run(vararg args: String?) {
+        Platform.startup(this::start);
     }
 
 }
 
 fun main(args: Array<out String>) {
-    Application.launch(FXApplication::class.java, *args)
+    SpringApplication.run(FXApplication::class.java, *args)
 }
