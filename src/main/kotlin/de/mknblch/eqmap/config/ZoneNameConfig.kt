@@ -26,18 +26,8 @@ class ZoneNameConfig {
             val groups = regex.matchEntire(it)?.groupValues ?: return@mapNotNull null
             Pair(groups[1].trim(), groups[2].trim())
         }.toMap()
-        //  maps: sirens groto -> siren's groto
-        val overrideKeys = InputStreamReader(mapKeysWho.inputStream).readLines().mapNotNull {
-            val groups = regex.matchEntire(it)?.groupValues ?: return@mapNotNull null
-            Pair(groups[2].trim(), groups[1].trim())
-        }.toMap()
-        // merge
-        return rawKey.map {
-            Pair(
-                overrideKeys.getOrDefault(it.key, it.key),
-                it.value
-            )
-        }.toMap()
+
+        return rawKey
     }
 
     @Qualifier("fileMapping")

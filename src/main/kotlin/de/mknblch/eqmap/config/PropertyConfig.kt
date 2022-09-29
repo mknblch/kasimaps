@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class PropertyConfig {
 
-    private val zViewDistance = SimpleDoubleProperty(45.0)
+    private val zViewDistance = SimpleDoubleProperty(35.0)
     private val strokeWidthProperty = SimpleDoubleProperty(1.0)
     private val useZLayerViewDistance = SimpleBooleanProperty(true)
     private val centerPlayerCursor = SimpleBooleanProperty(true)

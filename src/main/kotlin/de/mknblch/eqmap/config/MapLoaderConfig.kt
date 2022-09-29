@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Lazy
 import org.springframework.core.io.Resource
 import java.io.InputStreamReader
 import kotlin.math.max
@@ -62,6 +63,7 @@ class MapLoaderConfig {
     private lateinit var fileMapping: Map<String, String>
 
     @OptIn(DelicateCoroutinesApi::class)
+    @Lazy
     @Bean
     fun loadZoneMaps(): List<ZoneMap> {
         val jobs = resources.groupBy {
