@@ -1,34 +1,42 @@
 package de.mknblch.eqmap.common
 
+import de.mknblch.eqmap.MapPane
+import de.mknblch.eqmap.common.ColorTransformer.Companion.generateMonochromePalette
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generatePalette
+import javafx.beans.NamedArg
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyObjectProperty
 import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.beans.property.SimpleDoubleProperty
+import javafx.event.Event
 import javafx.event.EventHandler
+import javafx.event.EventType
 import javafx.geometry.Bounds
 import javafx.geometry.Insets
 import javafx.scene.control.Button
 import javafx.scene.control.Control
+import javafx.scene.input.MouseEvent
 import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
-import kotlin.math.max
-import kotlin.math.min
+import org.slf4j.LoggerFactory
+import kotlin.math.*
 
-internal class ColorChooser @JvmOverloads constructor(colors: List<Color> = generatePalette(30, offset = 190.0)) : VBox() {
-    private val GOLDEN_RATIO = 1.618
-    private val MIN_TILE_SIZE = 3.0
-    private val nColumns: Double
+internal open class ColorChooser @JvmOverloads constructor(
+    colors: List<Color> = generatePalette(24, offset = 180.0) + generateMonochromePalette(6),
+    @NamedArg("nColumns") nColumns: Double = 6.0 //calculateColumnSize(colors.size)
+) : GridPane() {
+
     private val nRows: Double
 
     /**
      * The color the user has selected or the default initial color (the first color in the palette)
      */
     private val chosenColor = ReadOnlyObjectWrapper<Color>()
+
     fun getChosenColor(): Color {
         return chosenColor.get()
     }
@@ -40,43 +48,32 @@ internal class ColorChooser @JvmOverloads constructor(colors: List<Color> = gene
     /**
      * Preferred size for a web palette tile
      */
-    private val prefTileSize: DoubleProperty = SimpleDoubleProperty(MIN_TILE_SIZE)
+    private val prefTileSize: DoubleProperty = SimpleDoubleProperty(Companion.MIN_TILE_SIZE)
 
 
     init {
 
-        // create a pane for showing info on the chosen color.
-        val colorInfo = HBox()
-
         // create a color swatch.
-        val swatch = GridPane()
-        swatch.isSnapToPixel = false
+        isSnapToPixel = false
 
         // calculate the number of columns and rows based on the number of colors and a golden ratio for layout.
-        nColumns = Math.floor(Math.sqrt(colors.size.toDouble()) * 2 / GOLDEN_RATIO)
-        nRows = Math.ceil(colors.size / nColumns)
+        nRows = ceil(colors.size / nColumns)
 
         // create a bunch of button controls for color selection.
-        var i = 0
-        for (color in colors) {
+        for ((i, color) in colors.withIndex()) {
             val colorHex = "#" + color.toString().removePrefix("0x")
-
             // create a button for choosing a color.
             val colorChoice = Button()
             colorChoice.userData = color
-
-
             // position the button in the grid.
-            GridPane.setRowIndex(colorChoice, i / nColumns.toInt())
-            GridPane.setColumnIndex(colorChoice, i % nColumns.toInt())
-            colorChoice.setMinSize(MIN_TILE_SIZE, MIN_TILE_SIZE)
+            setRowIndex(colorChoice, i / nColumns.toInt())
+            setColumnIndex(colorChoice, i % nColumns.toInt())
+            colorChoice.setMinSize(Companion.MIN_TILE_SIZE, Companion.MIN_TILE_SIZE)
             colorChoice.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE)
-
             // add a mouseover tooltip to display more info on the colour being examined.
-            // todo it would be nice to be able to have the tooltip appear immediately on mouseover, but there is no easy way to do this, (file jira feature request?)
             val graphic = Rectangle(30.0, 30.0, Color.web(colorHex))
-            graphic.widthProperty().bind(prefTileSize) //.multiply(1.5))
-            graphic.heightProperty().bind(prefTileSize) //.multiply(1.5))
+            graphic.widthProperty().bind(prefTileSize.multiply(1.5))
+            graphic.heightProperty().bind(prefTileSize.multiply(1.5))
 
             // color the button appropriately and change it's hover functionality (doing some of this in a css sheet would be better).
             val backgroundStyle = "-fx-background-color: $colorHex; -fx-background-insets: 0; -fx-background-radius: 1;"
@@ -92,31 +89,41 @@ internal class ColorChooser @JvmOverloads constructor(colors: List<Color> = gene
             }
 
             // choose the color when the button is clicked.
-            colorChoice.onAction = EventHandler { chosenColor.set(colorChoice.userData as Color) }
+            colorChoice.setOnMousePressed {
+                (colorChoice.userData as? Color)?.also {
+                    chosenColor.set(it)
+                }
+            }
 
-            // add the color choice to the swatch selection.
-            swatch.children.add(colorChoice)
-            i++
+            // add the color choice to the selection.
+            children.add(colorChoice)
         }
 
-        // select the first color in the chooser.
-        (swatch.children[0] as Button).fire()
-
-        // layout the color picker.
-        children.addAll(swatch, colorInfo)
-        setVgrow(swatch, Priority.ALWAYS)
+//        (swatch.children[0] as Button).fire()
         style = "-fx-background-color: transparent; -fx-font-size: 16;"
-        swatch.layoutBoundsProperty()
+        layoutBoundsProperty()
             .addListener { _, _, newBounds: Bounds ->
                 prefTileSize.set(
-                    max(MIN_TILE_SIZE, min(newBounds.width / nColumns, newBounds.height / nRows))
+                    max(Companion.MIN_TILE_SIZE, min(newBounds.width / nColumns, newBounds.height / nRows))
                 )
-                for (child in swatch.childrenUnmodifiable) {
+                for (child in childrenUnmodifiable) {
                     val tile = child as Control
                     val margin = 0.0 // prefTileSize.get() / 10
                     tile.setPrefSize(prefTileSize.get() - 2 * margin, prefTileSize.get() - 2 * margin)
-                    GridPane.setMargin(child, Insets(margin))
+                    setMargin(child, Insets(margin))
                 }
             }
+    }
+
+    companion object {
+
+        private val logger = LoggerFactory.getLogger(ColorChooser::class.java)
+
+        private const val GOLDEN_RATIO = 1.618
+        private const val MIN_TILE_SIZE = 3.0
+
+        fun calculateColumnSize(elements: Int): Double {
+            return floor(sqrt(elements.toDouble()) * 2 / Companion.GOLDEN_RATIO)
+        }
     }
 }

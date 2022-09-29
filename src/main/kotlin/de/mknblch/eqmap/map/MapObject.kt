@@ -14,9 +14,7 @@ interface MapObject {
             range.contains(zRange.start) ||
             range.contains(zRange.endInclusive)
 
-    fun show()
-
-    fun hide()
+    fun setShow(show: Boolean)
 
     companion object {
 

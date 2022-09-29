@@ -40,7 +40,6 @@ class FXApplication : CommandLineRunner {
         stage.show()
 
         ResizeHelper.addResizeListener(mapController.lockWindowMenuItem.selectedProperty(), stage)
-
     }
 
     @PreDestroy

@@ -5,21 +5,18 @@ import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.config.ZoneMap
 import de.mknblch.eqmap.map.Arrow
 import de.mknblch.eqmap.map.MapLine
-import de.mknblch.eqmap.map.MapObject
 import de.mknblch.eqmap.map.MapPOI
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
-import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
 import javafx.scene.Group
 import javafx.scene.Node
-import javafx.scene.control.ScrollPane
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.Border
 import javafx.scene.layout.Pane
+import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Line
 import org.slf4j.LoggerFactory
@@ -27,14 +24,15 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
-import javax.annotation.PostConstruct
+import java.awt.geom.Line2D
+import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
 
 @Lazy
 @Component
-class MapPane : ScrollPane() {
+class MapPane : StackPane() {
 
     private var cursor = Arrow(0.0, 0.0, 12.0, Color.BLUEVIOLET)
     private var mouseAnchorX: Double = 0.0
@@ -49,35 +47,40 @@ class MapPane : ScrollPane() {
 
     @Qualifier("zViewDistance")
     @Autowired
-    private lateinit var  zViewDistance: DoubleProperty
+    private lateinit var zViewDistance: DoubleProperty
 
     @Qualifier("strokeWidthProperty")
     @Autowired
-    private lateinit var  strokeWidthProperty: DoubleProperty
+    private lateinit var strokeWidthProperty: DoubleProperty
 
     @Qualifier("useZLayerViewDistance")
     @Autowired
-    private lateinit var  useZLayerViewDistance : BooleanProperty
+    private lateinit var useZLayerViewDistance: BooleanProperty
 
     @Qualifier("centerPlayerCursor")
     @Autowired
-    private lateinit var  centerPlayerCursor : BooleanProperty
+    private lateinit var centerPlayerCursor: BooleanProperty
 
-    @PostConstruct
-    fun init() {
-        println("initializing")
-    }
+    @Qualifier("showPoiProperty")
+    @Autowired
+    private lateinit var showPoiProperty: BooleanProperty
 
     fun setMapContent(map: ZoneMap) {
         cursor.isVisible = false
         this.map = map
-        content = prepare(map)
+        this.children.add(prepare(map))
         layout()
         showAllNodes()
         resetColor(colorTransformer)
+        cursor.sizeProperty.bind(strokeWidthProperty)
         centerMap()
         zoomToBounds()
         layout()
+        showPoiProperty.addListener { _, _, v ->
+            map.elements.filterIsInstance<MapPOI>().forEach {
+                it.setShow(v)
+            }
+        }
     }
 
     fun setColorTransformer(colorTransformer: ColorTransformer) {
@@ -86,6 +89,7 @@ class MapPane : ScrollPane() {
     }
 
     fun centerMap() {
+        if (!this::map.isInitialized) return
         val bounds = group.boundsInLocal
         val centerInLocal = Point2D(bounds.width / 2 + bounds.minX, bounds.height / 2 + bounds.minY)
         centerPoint(group.localToParent(centerInLocal))
@@ -96,7 +100,7 @@ class MapPane : ScrollPane() {
         if (!useZLayerViewDistance.get()) return
         val minZ: Double = map.elements.minOf { it.zRange.start }
         val maxZ: Double = map.elements.maxOf { it.zRange.endInclusive }
-        showZLayer(minZ + (maxZ - minZ) * z)
+        drawZLayer(minZ + (maxZ - minZ) * z)
     }
 
     fun moveCursor(x: Double, y: Double, z: Double) {
@@ -106,7 +110,7 @@ class MapPane : ScrollPane() {
         if (centerPlayerCursor.get()) {
             centerPoint(group.localToParent(cursor.getPosition()))
         }
-        if (useZLayerViewDistance.get()) showZLayer(z)
+        if (useZLayerViewDistance.get()) drawZLayer(z)
     }
 
     fun moveCursorClick(target: Point2D) {
@@ -123,14 +127,23 @@ class MapPane : ScrollPane() {
         resetColor(colorTransformer)
         map.elements.forEach {
             when (it) {
-                is MapLine -> it.stroke = (it.stroke as Color).deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
-                is MapPOI -> it.text.fill = (it.text.fill as Color).deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
+                is MapLine -> it.stroke = (it.stroke as Color).deriveColor(
+                    newColor.hue,
+                    newColor.saturation,
+                    newColor.brightness,
+                    newColor.opacity
+                )
+                is MapPOI -> it.text.fill = (it.text.fill as Color).deriveColor(
+                    newColor.hue,
+                    newColor.saturation,
+                    newColor.brightness,
+                    newColor.opacity
+                )
             }
 
         }
         cursor.fill = cursor.color.deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
     }
-
 
     fun resetColor(colorTransformer: ColorTransformer) {
         if (!this::map.isInitialized) return
@@ -139,20 +152,27 @@ class MapPane : ScrollPane() {
 
     fun showAllNodes() {
         if (this::map.isInitialized) {
-            map.elements.forEach(MapObject::show)
+            map.elements.forEach {
+                when (it) {
+                    is MapLine -> it.setShow(true)
+                    is MapPOI -> it.setShow(showPoiProperty.get())
+                }
+            }
         }
     }
 
-    private fun showZLayer(z: Double) {
-        showZLayer((z - zViewDistance.get()..z + zViewDistance.get()))
+    private fun drawZLayer(z: Double) {
+        drawZLayer((z - zViewDistance.get()..z + zViewDistance.get()))
     }
 
-    private fun showZLayer(range: ClosedRange<Double>) {
-        map.elements.forEach {
-            if (it.inRangeTo(range)) {
-                it.show()
-            } else {
-                it.hide()
+    private fun drawZLayer(range: ClosedRange<Double>) {
+        if (showPoiProperty.get()) {
+            map.elements.forEach {
+                it.setShow(it.inRangeTo(range))
+            }
+        } else {
+            map.elements.filterIsInstance<MapLine>().forEach {
+                it.setShow(it.inRangeTo(range))
             }
         }
     }
@@ -172,6 +192,7 @@ class MapPane : ScrollPane() {
         unloadCurrent()
         // group map & cursor
         group = Group(*map.toTypedArray(), cursor)
+
         // register properties on elements
         registerNodeProperties()
         // background for moving and scaling
@@ -179,7 +200,6 @@ class MapPane : ScrollPane() {
         with(enclosure) {
             // properties
             border = Border.EMPTY
-            isFitToWidth = true
 
             // pressed handler
             addEventFilter(MouseEvent.MOUSE_PRESSED) { mouseEvent ->
@@ -203,8 +223,6 @@ class MapPane : ScrollPane() {
     }
 
     private fun registerNodeProperties() {
-//        cursor.strokeWidthProperty()?.bind(strokeWidthProperty)
-        cursor.sizeProperty.bind(strokeWidthProperty)
         map.elements.forEach { node ->
             // increase stroke width when zooming out
             (node as? Line)?.strokeWidthProperty()?.bind(strokeWidthProperty)
@@ -269,14 +287,6 @@ class MapPane : ScrollPane() {
         group.scaleX = f
         group.scaleY = f
         strokeWidthProperty.set((1.0 / group.scaleY))
-    }
-
-    init {
-        isPannable = false
-        isFitToHeight = true // enables no-scrolling & dragging outside of map
-        isFitToWidth = true
-        hbarPolicy = ScrollBarPolicy.NEVER
-        vbarPolicy = ScrollBarPolicy.NEVER
     }
 
     companion object {

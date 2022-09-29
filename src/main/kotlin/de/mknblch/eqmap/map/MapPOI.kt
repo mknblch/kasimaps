@@ -31,13 +31,13 @@ data class MapPOI(
         line[7].replace('_', ' '),
     )
 
-    override fun show() {
-        circle.opacity = 1.0
-        text.opacity = 1.0
-    }
-
-    override fun hide() {
-        circle.opacity = 0.0
-        text.opacity = 0.0
+    override fun setShow(show: Boolean) {
+        if (show) {
+            circle.opacity = 1.0
+            text.opacity = 1.0
+        } else {
+            circle.opacity = 0.0
+            text.opacity = 0.0
+        }
     }
 }

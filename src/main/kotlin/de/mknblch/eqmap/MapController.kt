@@ -1,9 +1,12 @@
 package de.mknblch.eqmap
 
+import de.mknblch.eqmap.common.BlackWhiteChooser
 import de.mknblch.eqmap.common.ColorChooser
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.ZColorTransformer
 import de.mknblch.eqmap.config.FxmlResource
+import de.mknblch.eqmap.config.LocationEvent
+import de.mknblch.eqmap.config.ZoneEvent
 import de.mknblch.eqmap.config.ZoneMap
 import javafx.application.Platform
 import javafx.beans.property.BooleanProperty
@@ -13,18 +16,25 @@ import javafx.beans.property.SimpleDoubleProperty
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
+import javafx.scene.input.MouseButton
 import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.StackPane
+import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.stage.Stage
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.context.annotation.Bean
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
 import java.net.URL
 import java.util.*
 import javax.annotation.PreDestroy
+import kotlin.math.roundToInt
 
 
 @Component
@@ -38,6 +48,9 @@ class MapController : Initializable {
     private lateinit var context: ConfigurableApplicationContext
 
     @FXML
+    private lateinit var parentPane: StackPane
+
+    @FXML
     private lateinit var mapPane: MapPane
 
     @FXML
@@ -48,6 +61,12 @@ class MapController : Initializable {
 
     @FXML
     private lateinit var colorChooser: ColorChooser
+
+    @FXML
+    private lateinit var blackWhiteChooser: BlackWhiteChooser
+
+    @FXML
+    private lateinit var showPoi: CheckMenuItem
 
     @FXML
     private lateinit var centerCheckMenuItem: CheckMenuItem
@@ -69,71 +88,69 @@ class MapController : Initializable {
     @Autowired
     private lateinit var  centerPlayerCursor : SimpleBooleanProperty
 
+    @Qualifier("showPoiProperty")
+    @Autowired
+    private lateinit var showPoiProperty: SimpleBooleanProperty
+
     private var xOffset: Double = 0.0
     private var yOffset: Double = 0.0
 
-    private val zoneRegex = Regex("You have entered (.+)\\.")
-    private val locRegex = Regex("Your Location is ([^,]+), ([^,]+), ([^,]+)")
-
     @EventListener
-    fun onEqEvent(event: EqEvent) {
-        if (event.origin == Origin.EQLOG) {
-
-            zoneRegex.matchEntire(event.text)?.run {
-                val zoneName = groupValues[1]
-                println("zone to $zoneName")
-                zones.firstOrNull { it.name.equals(zoneName, true) }?.also {
-                    Platform.runLater {
-                        mapPane.setMapContent(it)
-                    }
-                }
-            }
-
-            locRegex.matchEntire(event.text)?.run {
-                val y = -groupValues[1].toDouble()
-                val x = -groupValues[2].toDouble()
-                val z = groupValues[3].toDouble()
-                mapPane.moveCursor(x, y, z)
+    fun onZoneEvent(e: ZoneEvent) {
+        logger.debug("${e.playerName} zoning to ${e.zone}")
+        zones.firstOrNull { it.name.equals(e.zone, true) }?.also {
+            Platform.runLater {
+                mapPane.setMapContent(it)
             }
         }
+    }
 
+    @EventListener
+    fun onLocationEvent(e: LocationEvent) {
+        logger.debug("${e.playerName} moving to (x=${e.x.roundToInt()}, y=${e.y.roundToInt()}, z=${e.z.roundToInt()})")
+        mapPane.moveCursor(e.x, e.y, e.z)
     }
 
     @FXML
     fun setZColorTransformer() {
-        mapPane.setColorTransformer(ZColorTransformer(30))
+        mapPane.setColorTransformer(Companion.zColorTransformer)
     }
 
     @FXML
     fun setOriginalTransformer() {
-
         mapPane.setColorTransformer(OriginalTransformer)
     }
-
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         populateZoneMenu()
         menuBar.opacity = 1.0
+        mapPane.background = Background.EMPTY
         // register properties
         centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
         useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
+        showPoiProperty.bind(showPoi.selectedProperty())
         useZLayerViewDistance.addListener { _,_,_ ->
             mapPane.showAllNodes()
         }
         val primaryStage: Stage = context.getBean("primaryStage") as Stage
         transparentWindow.selectedProperty().addListener { _, _, newValue ->
-            primaryStage.opacity = if(newValue) 0.8 else 1.0
+            primaryStage.opacity = if(newValue) 0.7 else 1.0
         }
         registerMaximizeListener(primaryStage)
         registerDragListener(primaryStage)
-        colorChooser.chosenColorProperty().addListener { _,_,v ->
+        colorChooser.chosenColorProperty().addListener { _, _, v ->
             mapPane.deriveColor(v)
         }
-        lockWindowMenuItem.selectedProperty().addListener { _, _, newValue ->
-            primaryStage.isAlwaysOnTop = newValue
+        blackWhiteChooser.chosenColorProperty().addListener { _, _, v ->
+            logger.debug("setting background to $v")
+            mapPane.background = Background.fill(v)
         }
-
-        mapPane.background = Background.fill(Color.TRANSPARENT)
+        lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
+            primaryStage.isAlwaysOnTop = v
+        }
+        parentPane.hoverProperty().addListener { _, _, v ->
+            menuBar.opacity = if (v) 1.0 else 0.0
+        }
         mapPane.showAllNodes()
     }
 
@@ -152,8 +169,9 @@ class MapController : Initializable {
             if (lockWindowMenuItem.selectedProperty().get()) {
                 return@setOnMouseClicked
             }
-            if (it.clickCount == 2) {
+            if (it.button == MouseButton.PRIMARY && it.clickCount == 2) {
                 primaryStage.isMaximized = !primaryStage.isMaximized
+                mapPane.centerMap()
             }
             it.consume()
         }
@@ -183,5 +201,10 @@ class MapController : Initializable {
     @FXML
     fun exit() {
         context.close()
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(MapController::class.java)
+        private val zColorTransformer = ZColorTransformer(30)
     }
 }

@@ -1,5 +1,6 @@
 package de.mknblch.eqmap.config
 
+import de.mknblch.eqmap.map.MapLine
 import de.mknblch.eqmap.map.MapObject
 import javafx.scene.Group
 import javafx.scene.Node
@@ -12,6 +13,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.Resource
 import java.io.InputStreamReader
+import kotlin.math.max
+import kotlin.math.min
 
 typealias MapLayer = Pair<String, List<MapObject>>
 
@@ -20,8 +23,29 @@ data class ZoneMap(
     val elements: List<MapObject>,
     val layer: List<MapLayer>
 ) {
-    fun toGroup(): Group {
-        return Group(*toTypedArray())
+
+    val minX: Double by lazy {
+        elements.filterIsInstance<MapLine>().minOf { min(it.x1, it.x2) }
+    }
+
+    val maxX: Double by lazy {
+        elements.filterIsInstance<MapLine>().maxOf { max(it.x1, it.x2) }
+    }
+
+    val minY: Double by lazy {
+        elements.filterIsInstance<MapLine>().minOf { min(it.y1, it.y2) }
+    }
+
+    val maxY: Double by lazy {
+        elements.filterIsInstance<MapLine>().maxOf { max(it.y1, it.y2) }
+    }
+
+    val minZ: Double by lazy {
+        elements.filterIsInstance<MapLine>().minOf { min(it.z1, it.z2) }
+    }
+
+    val maxZ: Double by lazy {
+        elements.filterIsInstance<MapLine>().maxOf { max(it.z1, it.z2) }
     }
 
     fun toTypedArray() = elements.map { it as Node }.toTypedArray()

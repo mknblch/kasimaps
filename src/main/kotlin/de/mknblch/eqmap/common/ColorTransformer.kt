@@ -28,6 +28,17 @@ interface ColorTransformer {
             }
         }
 
+        fun generateMonochromePalette(
+            size: Int = 6,
+        ): List<Color> {
+
+            val d = 1.0 / size
+            return (0 until size).map {
+                val v = d * it
+                Color.color(v, v, v)
+            }
+        }
+
         fun colorizeNode(mapObject: MapObject, color: Color) {
             when (mapObject) {
                 is MapLine -> mapObject.stroke = color
@@ -45,9 +56,7 @@ object OriginalTransformer : ColorTransformer {
     }
 }
 
-class ZColorTransformer(
-    paletteSize: Int = 36
-) : ColorTransformer {
+class ZColorTransformer(paletteSize: Int = 36) : ColorTransformer {
 
     private val palette = generatePalette(paletteSize)
 

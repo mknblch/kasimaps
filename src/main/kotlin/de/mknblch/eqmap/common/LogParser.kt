@@ -10,7 +10,7 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.util.concurrent.atomic.AtomicBoolean
 
-abstract class LogParser(val logfile: File, private val maxFileSize: Long = 1024 * 256) : AutoCloseable {
+abstract class LogParser(val logfile: File, private val maxFileSize: Long = Long.MAX_VALUE) : AutoCloseable {
 
     private val active = AtomicBoolean(true)
     private var randomAccessFile: RandomAccessFile = RandomAccessFile(logfile, "rw")

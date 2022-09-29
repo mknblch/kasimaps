@@ -34,11 +34,11 @@ data class MapLine(
         stroke = color
     }
 
-    override fun show() {
-        opacity = 1.0
+    override fun setShow(show: Boolean) {
+        opacity = if(show) 1.0 else 0.0
     }
 
-    override fun hide() {
-        opacity = 0.0
+    fun crosses(line: MapLine) {
+
     }
 }

@@ -61,7 +61,7 @@ class Arrow @JvmOverloads constructor(
             draw()
         }
         fill = color
-        stroke = color.darker()
+        stroke = Color.TRANSPARENT
         effect = Lighting()
     }
     companion object {

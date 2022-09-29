@@ -41,20 +41,26 @@ object ResizeHelper {
         }
     }
 
-    private fun addListenerDeeply(node: Node, listener: EventHandler<MouseEvent>, depth: Int = Integer.MAX_VALUE) {
-        node.addEventHandler(MouseEvent.MOUSE_PRESSED, listener)
-        node.addEventHandler(MouseEvent.MOUSE_DRAGGED, listener)
-        node.addEventHandler(MouseEvent.MOUSE_EXITED, listener)
-        node.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, listener)
-        node.addEventHandler(MouseEvent.MOUSE_MOVED, listener)
+    private fun addListenerDeeply(node: Node, listener: EventHandler<MouseEvent>, depth: Int) {
+
+        doTraverse(depth, node) {
+            node.addEventHandler(MouseEvent.MOUSE_PRESSED, listener)
+            node.addEventHandler(MouseEvent.MOUSE_DRAGGED, listener)
+            node.addEventHandler(MouseEvent.MOUSE_EXITED, listener)
+            node.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, listener)
+            node.addEventHandler(MouseEvent.MOUSE_MOVED, listener)
+        }
+    }
+
+    private fun doTraverse(depth: Int, node: Node, lambda: (Node) -> Unit) {
+        lambda(node)
         if (depth <= 0) {
             return
         }
-
         if (node is Parent) {
             val children = node.childrenUnmodifiable
             for (child in children) {
-                addListenerDeeply(child, listener, depth - 1)
+                doTraverse(depth - 1, child, lambda)
             }
         }
     }
@@ -64,8 +70,6 @@ object ResizeHelper {
         private var resizing = true
         private var startX = 0.0
         private var startY = 0.0
-        private var screenOffsetX = 0.0
-        private var screenOffsetY = 0.0
 
         // Max and min sizes for controlled stage
         var minWidth = 0.0
@@ -139,29 +143,15 @@ object ResizeHelper {
                     mouseEvent.consume()
                 }
             }
-//            if (MouseEvent.MOUSE_PRESSED == mouseEvent.eventType && Cursor.DEFAULT == cursorEvent) {
-//                resizing = false
-//                screenOffsetX = stage.x - mouseEvent.screenX
-//                screenOffsetY = stage.y - mouseEvent.screenY
-//            }
-//            if (MouseEvent.MOUSE_DRAGGED == mouseEvent.eventType && Cursor.DEFAULT == cursorEvent && !resizing) {
-//                stage.x = mouseEvent.screenX + screenOffsetX
-//                stage.y = mouseEvent.screenY + screenOffsetY
-//            }
+
         }
 
         private fun setStageWidth(width: Double) {
-            var width = width
-            width = width.coerceAtMost(maxWidth)
-            width = width.coerceAtLeast(minWidth)
-            stage.width = width
+            stage.width = width.coerceIn(minWidth, maxWidth)
         }
 
         private fun setStageHeight(height: Double) {
-            var height = height
-            height = height.coerceAtMost(maxHeight)
-            height = height.coerceAtLeast(minHeight)
-            stage.height = height
+            stage.height = height.coerceIn(minHeight, maxHeight)
         }
     }
 }
