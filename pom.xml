@@ -90,7 +90,7 @@
     </dependencies>
 
     <build>
-        <finalName>EqMap</finalName>
+        <finalName>Kasimaps</finalName>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
         <plugins>
@@ -101,7 +101,7 @@
                 <executions>
                     <execution>
                         <configuration>
-                            <mainClass>de.mknblch.eqmap.FXApplication</mainClass>
+                            <mainClass>de.mknblch.eqmap.Kasimaps</mainClass>
                         </configuration>
                     </execution>
                 </executions>

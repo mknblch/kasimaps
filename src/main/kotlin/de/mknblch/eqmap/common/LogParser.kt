@@ -10,14 +10,13 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.util.concurrent.atomic.AtomicBoolean
 
-abstract class LogParser(val logfile: File, private val maxFileSize: Long = Long.MAX_VALUE) : AutoCloseable {
+abstract class LogParser(val logfile: File) : AutoCloseable {
 
     private val active = AtomicBoolean(true)
     private var randomAccessFile: RandomAccessFile = RandomAccessFile(logfile, "rw")
 
     init {
 
-        logger.trace("advancing $logfile to ${randomAccessFile.length()}")
         randomAccessFile.seek(randomAccessFile.length())
 
         GlobalScope.async(Dispatchers.IO) {
@@ -37,11 +36,6 @@ abstract class LogParser(val logfile: File, private val maxFileSize: Long = Long
                 // wait for input
                 chr == -1 -> {
                     delay(1)
-                    if (randomAccessFile.length() > maxFileSize) {
-                        logger.debug("reset $logfile(${randomAccessFile.length()}) to 0")
-                        randomAccessFile.setLength(0)
-                        randomAccessFile.seek(0)
-                    }
                     continue@Loop
                 }
                 // emit complete sentence
@@ -68,6 +62,7 @@ abstract class LogParser(val logfile: File, private val maxFileSize: Long = Long
 
     override fun close() {
         active.set(false)
+
     }
 
     companion object {

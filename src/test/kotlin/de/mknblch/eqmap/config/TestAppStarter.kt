@@ -1,6 +1,5 @@
 package de.mknblch.eqmap.config
 
-import org.mockito.Mock
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.test.mock.mockito.MockBean
 
@@ -8,7 +7,7 @@ import org.springframework.boot.test.mock.mockito.MockBean
 class TestAppStarter {
 
     @MockBean
-    private lateinit var directoryWatcherConfig: DirectoryWatcherConfig
+    private lateinit var directoryWatcherService: DirectoryWatcherService
 
     @MockBean
     private lateinit var springFXMLLoader: SpringFXMLLoader

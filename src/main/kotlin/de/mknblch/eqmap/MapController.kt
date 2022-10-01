@@ -4,10 +4,7 @@ import de.mknblch.eqmap.common.BlackWhiteChooser
 import de.mknblch.eqmap.common.ColorChooser
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.ZColorTransformer
-import de.mknblch.eqmap.config.FxmlResource
-import de.mknblch.eqmap.config.LocationEvent
-import de.mknblch.eqmap.config.ZoneEvent
-import de.mknblch.eqmap.config.ZoneMap
+import de.mknblch.eqmap.config.*
 import javafx.application.Platform
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
@@ -47,11 +44,17 @@ class MapController : Initializable {
     @Autowired
     private lateinit var context: ConfigurableApplicationContext
 
+    @Autowired
+    private lateinit var directoryWatcherService: DirectoryWatcherService
+
     @FXML
     private lateinit var parentPane: StackPane
 
     @FXML
     private lateinit var mapPane: MapPane
+
+    @FXML
+    private lateinit var resetMenuItem: MenuItem
 
     @FXML
     private lateinit var zoneMenu: Menu
@@ -150,6 +153,9 @@ class MapController : Initializable {
         }
         parentPane.hoverProperty().addListener { _, _, v ->
             menuBar.opacity = if (v) 1.0 else 0.0
+        }
+        resetMenuItem.setOnAction {
+            directoryWatcherService.reset()
         }
         mapPane.showAllNodes()
     }

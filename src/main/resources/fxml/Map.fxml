@@ -14,6 +14,8 @@
                     <CheckMenuItem fx:id="lockWindowMenuItem" mnemonicParsing="false" text="Lock Window" />
                     <CheckMenuItem fx:id="transparentWindow" mnemonicParsing="false" text="Transparent Window" />
                <SeparatorMenuItem mnemonicParsing="false" />
+               <MenuItem fx:id="resetMenuItem" mnemonicParsing="false" text="Reset" />
+               <SeparatorMenuItem mnemonicParsing="false" />
                     <MenuItem mnemonicParsing="false" onAction="#exit" text="Exit" />
                 </items>
             </Menu>

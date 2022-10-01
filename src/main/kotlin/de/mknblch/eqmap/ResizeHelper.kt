@@ -154,4 +154,5 @@ object ResizeHelper {
             stage.height = height.coerceIn(minHeight, maxHeight)
         }
     }
+
 }
