@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
+import javax.annotation.PostConstruct
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
@@ -39,6 +40,7 @@ class MapPane : StackPane() {
     private lateinit var group: Group
     private lateinit var enclosure: Pane
 
+    private val zOrdinate: DoubleProperty = SimpleDoubleProperty(0.0)
     private var colorTransformer: ColorTransformer = OriginalTransformer
 
     @Qualifier("zViewDistance")
@@ -61,9 +63,8 @@ class MapPane : StackPane() {
     @Autowired
     private lateinit var showPoiProperty: BooleanProperty
 
-    private val zOrdinate: DoubleProperty = SimpleDoubleProperty(0.0)
 
-    fun setMapContent(map: ZoneMap) {
+    fun setMapContent(map: ZoneMap) = synchronized(this) {
         cursor.isVisible = false
         this.map = map
         this.children.add(prepare(map))
@@ -74,11 +75,7 @@ class MapPane : StackPane() {
         centerMap()
         zoomToBounds()
         layout()
-        showPoiProperty.addListener { _, _, v ->
-            map.elements.filterIsInstance<MapPOI>().forEach {
-                it.setShow(v)
-            }
-        }
+
     }
 
     fun setColorTransformer(colorTransformer: ColorTransformer) {
@@ -290,10 +287,9 @@ class MapPane : StackPane() {
     }
 
     private fun changeZAxis(v: Double) {
-        println("v: $v")
         zOrdinate.set(zOrdinate.get() + v * 10)
         redraw()
-        println(zOrdinate.get())
+        logger.debug("changing Z-Axis ordinate to ${zOrdinate.get()}")
     }
 
     private fun zoomAt(mousePoint: Point2D, v: Double) {
@@ -319,6 +315,13 @@ class MapPane : StackPane() {
         group.scaleX = f
         group.scaleY = f
         strokeWidthProperty.set((1.0 / group.scaleY))
+    }
+
+    @PostConstruct
+    fun init() {
+        showPoiProperty.addListener { _, _, _ ->
+            redraw()
+        }
     }
 
     companion object {
