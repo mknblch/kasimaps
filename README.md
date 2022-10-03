@@ -22,6 +22,7 @@
 - Background and False-Colors for map elements can be changed too
 - `App -> Lock Window` brings the window to the top and disables dragging and resizing
 - `App -> Transparent Window` changes window opacity
+- ...
 
 ### Map explorer
 
