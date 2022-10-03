@@ -17,6 +17,7 @@ import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Line
+import javafx.scene.text.Text
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlin.math.sign
 
 @Lazy
@@ -32,6 +34,7 @@ import kotlin.math.sign
 class MapPane : StackPane() {
 
     private var cursor = Arrow(0.0, 0.0, 12.0, Color.GOLDENROD)
+    private val cursorText = Text(0.0, 0.0, "")
     private var mouseAnchorX: Double = 0.0
     private var mouseAnchorY: Double = 0.0
     private var initialTranslateX: Double = 0.0
@@ -229,8 +232,20 @@ class MapPane : StackPane() {
                 onScroll(mouseEvent)
                 mouseEvent.consume()
             }
+
+            addEventFilter(MouseEvent.MOUSE_MOVED) { mouseEvent ->
+                onMouseMoved(mouseEvent)
+            }
+
         }
         return enclosure
+    }
+
+    private fun onMouseMoved(mouseEvent: MouseEvent) {
+        val b = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
+        cursorText.text = "(${b.y.roundToInt()} x ${b.x.roundToInt()})"
+        cursorText.translateX = mouseEvent.x + 15
+        cursorText.translateY = mouseEvent.y + 15
     }
 
     private fun registerNodeProperties() {
@@ -322,6 +337,19 @@ class MapPane : StackPane() {
         showPoiProperty.addListener { _, _, _ ->
             redraw()
         }
+        children.add(cursorText)
+    }
+
+    fun shotCursorText(v: Boolean) {
+        cursorText.isVisible = v
+    }
+
+    fun setCursorColor(color: Color) {
+        cursorText.stroke = color
+    }
+
+    fun setCursorVisible(visible: Boolean) {
+        cursorText.opacity = if (visible) 1.0 else 0.0
     }
 
     companion object {

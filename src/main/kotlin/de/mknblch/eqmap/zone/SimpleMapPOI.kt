@@ -1,8 +1,10 @@
 package de.mknblch.eqmap.zone
 
 import javafx.scene.Group
+import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
+import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
 
 private const val POI_SIZE = 3
@@ -32,7 +34,6 @@ data class SimpleMapPOI(
     }
 
     init {
-
         styleClass.add("simpleMapPOI")
     }
 

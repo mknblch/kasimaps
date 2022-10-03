@@ -1,13 +1,13 @@
 package de.mknblch.eqmap
 
-import de.mknblch.eqmap.fx.BlackWhiteChooser
-import de.mknblch.eqmap.fx.ColorChooser
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.ZColorTransformer
 import de.mknblch.eqmap.config.DirectoryWatcherService
 import de.mknblch.eqmap.config.FxmlResource
 import de.mknblch.eqmap.config.LocationEvent
 import de.mknblch.eqmap.config.ZoneEvent
+import de.mknblch.eqmap.fx.BlackWhiteChooser
+import de.mknblch.eqmap.fx.ColorChooser
 import de.mknblch.eqmap.fx.CustomCheckMenuItem
 import de.mknblch.eqmap.fx.MapPane
 import de.mknblch.eqmap.zone.LayerComparator
@@ -72,6 +72,9 @@ class MapController : Initializable {
 
     @FXML
     private lateinit var showPoi: CustomCheckMenuItem
+
+    @FXML
+    private lateinit var showCursorText: CustomCheckMenuItem
 
     @FXML
     private lateinit var centerCheckMenuItem: CustomCheckMenuItem
@@ -149,15 +152,20 @@ class MapController : Initializable {
         blackWhiteChooser.chosenColorProperty().addListener { _, _, v ->
             logger.debug("setting background to $v")
             mapPane.background = Background.fill(v)
+            mapPane.setCursorColor(v.invert())
         }
         lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
             primaryStage.isAlwaysOnTop = v
         }
         parentPane.hoverProperty().addListener { _, _, v ->
             menuBar.opacity = if (v) 1.0 else 0.0
+            mapPane.setCursorVisible(v)
         }
         resetMenuItem.setOnAction {
             directoryWatcherService.reset()
+        }
+        showCursorText.selectedProperty().addListener { _, _, v ->
+            mapPane.shotCursorText(v)
         }
         mapPane.redraw()
     }
