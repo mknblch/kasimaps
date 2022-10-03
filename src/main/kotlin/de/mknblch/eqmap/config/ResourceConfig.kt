@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration
 import java.util.*
 
 @Configuration
-class BeanConfiguration {
+class ResourceConfig {
 
     @Bean
     fun resourceBundle(): ResourceBundle {
