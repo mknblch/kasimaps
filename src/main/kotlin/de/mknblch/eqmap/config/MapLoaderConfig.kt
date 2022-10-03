@@ -1,8 +1,9 @@
 package de.mknblch.eqmap.config
 
-import de.mknblch.eqmap.map.MapLine
-import de.mknblch.eqmap.map.MapObject
-import javafx.scene.Group
+import de.mknblch.eqmap.zone.MapLayer
+import de.mknblch.eqmap.zone.MapLine
+import de.mknblch.eqmap.zone.MapNode
+import de.mknblch.eqmap.zone.ZoneMap
 import javafx.scene.Node
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
@@ -17,40 +18,6 @@ import java.io.InputStreamReader
 import kotlin.math.max
 import kotlin.math.min
 
-typealias MapLayer = Pair<String, List<MapObject>>
-
-data class ZoneMap(
-    val name: String,
-    val elements: List<MapObject>,
-    val layer: List<MapLayer>
-) {
-
-    val minX: Double by lazy {
-        elements.filterIsInstance<MapLine>().minOf { min(it.x1, it.x2) }
-    }
-
-    val maxX: Double by lazy {
-        elements.filterIsInstance<MapLine>().maxOf { max(it.x1, it.x2) }
-    }
-
-    val minY: Double by lazy {
-        elements.filterIsInstance<MapLine>().minOf { min(it.y1, it.y2) }
-    }
-
-    val maxY: Double by lazy {
-        elements.filterIsInstance<MapLine>().maxOf { max(it.y1, it.y2) }
-    }
-
-    val minZ: Double by lazy {
-        elements.filterIsInstance<MapLine>().minOf { min(it.z1, it.z2) }
-    }
-
-    val maxZ: Double by lazy {
-        elements.filterIsInstance<MapLine>().maxOf { max(it.z1, it.z2) }
-    }
-
-    fun toTypedArray() = elements.map { it as Node }.toTypedArray()
-}
 
 @Configuration
 class MapLoaderConfig {
@@ -72,7 +39,7 @@ class MapLoaderConfig {
             if (entry.key == null) return@mapNotNull null
             GlobalScope.async(Dispatchers.IO) {
                 val layer: List<MapLayer> = entry.value.mapNotNull(::loadLayer)
-                val elements: List<MapObject> = layer.flatMap { it.second }
+                val elements: List<MapNode> = layer.flatMap { it.nodes }
                 val zoneName = fileMapping.getOrDefault(entry.key!!, entry.key!!)
                 ZoneMap(zoneName, elements, layer)
             }
@@ -89,7 +56,7 @@ class MapLoaderConfig {
                 logger.debug("loading ${resource.filename}")
                 val list = resource.inputStream.use { stream ->
                     InputStreamReader(stream).readLines().filter(String::isNotBlank)
-                        .mapNotNull(MapObject::fromString)
+                        .mapNotNull(MapNode::fromString)
                         .distinct()
                 }
                 MapLayer(resource.filename ?: "null", list)

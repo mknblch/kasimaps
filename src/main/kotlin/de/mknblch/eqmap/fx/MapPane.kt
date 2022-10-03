@@ -1,13 +1,11 @@
-package de.mknblch.eqmap
+package de.mknblch.eqmap.fx
 
 import de.mknblch.eqmap.common.ColorTransformer
 import de.mknblch.eqmap.common.OriginalTransformer
-import de.mknblch.eqmap.config.ZoneMap
-import de.mknblch.eqmap.map.Arrow
-import de.mknblch.eqmap.map.MapLine
-import de.mknblch.eqmap.map.MapPOI
+import de.mknblch.eqmap.zone.*
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
 import javafx.scene.Group
 import javafx.scene.Node
@@ -24,8 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
-import java.awt.geom.Line2D
-import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
@@ -34,7 +30,7 @@ import kotlin.math.sign
 @Component
 class MapPane : StackPane() {
 
-    private var cursor = Arrow(0.0, 0.0, 12.0, Color.BLUEVIOLET)
+    private var cursor = Arrow(0.0, 0.0, 12.0, Color.GOLDENROD)
     private var mouseAnchorX: Double = 0.0
     private var mouseAnchorY: Double = 0.0
     private var initialTranslateX: Double = 0.0
@@ -65,12 +61,14 @@ class MapPane : StackPane() {
     @Autowired
     private lateinit var showPoiProperty: BooleanProperty
 
+    private val zOrdinate: DoubleProperty = SimpleDoubleProperty(0.0)
+
     fun setMapContent(map: ZoneMap) {
         cursor.isVisible = false
         this.map = map
         this.children.add(prepare(map))
         layout()
-        showAllNodes()
+        redraw()
         resetColor(colorTransformer)
         cursor.sizeProperty.bind(strokeWidthProperty)
         centerMap()
@@ -125,15 +123,21 @@ class MapPane : StackPane() {
     fun deriveColor(newColor: Color) {
         if (!this::map.isInitialized) return
         resetColor(colorTransformer)
-        map.elements.forEach {
-            when (it) {
-                is MapLine -> it.stroke = (it.stroke as Color).deriveColor(
+        map.elements.forEach { node ->
+            when (node) {
+                is MapLine -> node.stroke = (node.stroke as Color).deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
                     newColor.opacity
                 )
-                is MapPOI -> it.text.fill = (it.text.fill as Color).deriveColor(
+                is MapPOI -> node.text.fill = (node.text.fill as Color).deriveColor(
+                    newColor.hue,
+                    newColor.saturation,
+                    newColor.brightness,
+                    newColor.opacity
+                )
+                is SimpleMapPOI -> node.text.fill = (node.text.fill as Color).deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
@@ -150,30 +154,40 @@ class MapPane : StackPane() {
         colorTransformer.apply(map.elements)
     }
 
-    fun showAllNodes() {
-        if (this::map.isInitialized) {
-            map.elements.forEach {
-                when (it) {
-                    is MapLine -> it.setShow(true)
-                    is MapPOI -> it.setShow(showPoiProperty.get())
-                }
-            }
+    private fun drawZLayer(z: Double) {
+        zOrdinate.set(z)
+        redraw()
+    }
+
+    fun redraw() {
+        if(!this::map.isInitialized) return
+        map.layer.forEach { layer ->
+            redrawLayer(layer)
         }
     }
 
-    private fun drawZLayer(z: Double) {
-        drawZLayer((z - zViewDistance.get()..z + zViewDistance.get()))
-    }
-
-    private fun drawZLayer(range: ClosedRange<Double>) {
-        if (showPoiProperty.get()) {
-            map.elements.forEach {
-                it.setShow(it.inRangeTo(range))
+    private fun redrawLayer(layer: MapLayer) {
+        layer.nodes.forEach { node ->
+            // hide if whole layer is set to be hidden
+            if (!layer.show) {
+                node.setShow(false)
+                return@forEach
             }
-        } else {
-            map.elements.filterIsInstance<MapLine>().forEach {
-                it.setShow(it.inRangeTo(range))
+            // hide if not in z-range and switch is on
+            if (useZLayerViewDistance.get()) {
+                val range = (zOrdinate.get() - zViewDistance.get()) .. (zOrdinate.get() + zViewDistance.get())
+                if (!node.inRangeTo(range)) {
+                    node.setShow(false)
+                    return@forEach
+                }
             }
+            // hide POI if switch off
+            if ((node is MapPOI || node is SimpleMapPOI) && !showPoiProperty.get()) {
+                node.setShow(false)
+                return@forEach
+            }
+            // show otherwise
+            node.setShow(true)
         }
     }
 

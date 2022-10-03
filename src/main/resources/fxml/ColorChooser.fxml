@@ -1,2 +1,4 @@
-<fx:root type="de.mknblch.eqmap.common.ColorChooser" fx:controller="de.mknblch.eqmap.common.ColorChooser" xmlns:fx="http://javafx.com/fxml">
+<?import javafx.scene.layout.GridPane ?>
+
+<fx:root type="GridPane" fx:controller="de.mknblch.eqmap.fx.ColorChooser" xmlns:fx="http://javafx.com/fxml">
 </fx:root>

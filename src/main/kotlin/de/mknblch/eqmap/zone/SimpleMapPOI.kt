@@ -1,4 +1,4 @@
-package de.mknblch.eqmap.map
+package de.mknblch.eqmap.zone
 
 import javafx.scene.Group
 import javafx.scene.paint.Color
@@ -7,10 +7,9 @@ import javafx.scene.text.Text
 
 private const val POI_SIZE = 3
 
-data class MapPOI(
+data class SimpleMapPOI(
     val x: Double,
     val y: Double,
-    val z: Double,
     override val color: Color,
     val type: Int,
     val name: String,
@@ -19,17 +18,8 @@ data class MapPOI(
         it.fill = color
     },
     val text: Text = Text(x + POI_SIZE + 1, y + POI_SIZE, name),
-    override val zRange: ClosedRange<Double> = (z..z)
-) : MapObject, Group(circle, text) {
-
-    constructor(vararg line: String) : this(
-        line[0].toDouble(),
-        line[1].toDouble(),
-        line[2].toDouble(),
-        Color.color(line[3].toDouble() / 255.0, line[4].toDouble() / 255.0, line[5].toDouble() / 255.0, 1.0),
-        line[6].toInt(),
-        line[7].replace('_', ' '),
-    )
+    override val zRange: ClosedRange<Double> = (-Double.MAX_VALUE .. Double.MAX_VALUE)
+) : MapNode, Group(circle, text) {
 
     override fun setShow(show: Boolean) {
         if (show) {
@@ -38,6 +28,24 @@ data class MapPOI(
         } else {
             circle.opacity = 0.0
             text.opacity = 0.0
+        }
+    }
+
+    init {
+
+        styleClass.add("simpleMapPOI")
+    }
+
+    companion object {
+
+        fun buildFromString(vararg line: String): SimpleMapPOI {
+            return SimpleMapPOI(
+                line[0].toDouble(),
+                line[1].toDouble(),
+                Color.color(line[2].toDouble() / 255.0, line[3].toDouble() / 255.0, line[4].toDouble() / 255.0, 1.0),
+                line[5].toInt(),
+                line[6].replace('_', ' '),
+            )
         }
     }
 }

@@ -2,15 +2,15 @@ package de.mknblch.eqmap.common
 
 import de.mknblch.eqmap.common.ColorTransformer.Companion.colorizeNode
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generatePalette
-import de.mknblch.eqmap.map.MapLine
-import de.mknblch.eqmap.map.MapObject
-import de.mknblch.eqmap.map.MapPOI
+import de.mknblch.eqmap.zone.MapLine
+import de.mknblch.eqmap.zone.MapNode
+import de.mknblch.eqmap.zone.MapPOI
 import javafx.scene.paint.Color
 import kotlin.math.min
 
 interface ColorTransformer {
 
-    fun apply(objects: Collection<MapObject>)
+    fun apply(objects: Collection<MapNode>)
 
     companion object {
 
@@ -39,7 +39,7 @@ interface ColorTransformer {
             }
         }
 
-        fun colorizeNode(mapObject: MapObject, color: Color) {
+        fun colorizeNode(mapObject: MapNode, color: Color) {
             when (mapObject) {
                 is MapLine -> mapObject.stroke = color
                 is MapPOI -> mapObject.text.fill = color
@@ -49,7 +49,7 @@ interface ColorTransformer {
 }
 
 object OriginalTransformer : ColorTransformer {
-    override fun apply(objects: Collection<MapObject>) {
+    override fun apply(objects: Collection<MapNode>) {
         objects.forEach {
             colorizeNode(it, it.color)
         }
@@ -60,7 +60,7 @@ class ZColorTransformer(paletteSize: Int = 36) : ColorTransformer {
 
     private val palette = generatePalette(paletteSize)
 
-    override fun apply(objects: Collection<MapObject>) {
+    override fun apply(objects: Collection<MapNode>) {
         val minZ: Double = objects.filterIsInstance<MapLine>().minOf { min(it.zRange.start, it.zRange.endInclusive) }
         val maxZ: Double = objects.filterIsInstance<MapLine>().maxOf { min(it.zRange.start, it.zRange.endInclusive) }
         objects.forEach {

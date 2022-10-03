@@ -1,9 +1,8 @@
-package de.mknblch.eqmap.map
+package de.mknblch.eqmap.zone
 
-import javafx.scene.Node
 import javafx.scene.paint.Color
 
-interface MapObject {
+interface MapNode {
 
     val color: Color
 
@@ -18,7 +17,7 @@ interface MapObject {
 
     companion object {
 
-        fun fromString(l: String): MapObject? {
+        fun fromString(l: String): MapNode? {
             val head = l[0].toString()
             val line: Array<String> = l.removeRange(0, 1)
                 .split(",")
@@ -26,8 +25,9 @@ interface MapObject {
                 .toTypedArray()
             return try {
                 when (head) {
-                    "L" -> MapLine(*line)
-                    "P" -> MapPOI(*line)
+                    "L" -> MapLine.buildFromLine(*line)
+                    "P" -> MapPOI.buildFromString(*line)
+                    "K" -> SimpleMapPOI.buildFromString(*line)
                     "#" -> null // skip
                     else -> throw IllegalArgumentException("invalid header '$head'")
                 }

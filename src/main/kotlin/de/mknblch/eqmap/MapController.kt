@@ -1,33 +1,32 @@
 package de.mknblch.eqmap
 
-import de.mknblch.eqmap.common.BlackWhiteChooser
-import de.mknblch.eqmap.common.ColorChooser
+import de.mknblch.eqmap.fx.BlackWhiteChooser
+import de.mknblch.eqmap.fx.ColorChooser
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.ZColorTransformer
-import de.mknblch.eqmap.config.*
+import de.mknblch.eqmap.config.DirectoryWatcherService
+import de.mknblch.eqmap.config.FxmlResource
+import de.mknblch.eqmap.config.LocationEvent
+import de.mknblch.eqmap.config.ZoneEvent
+import de.mknblch.eqmap.fx.CustomCheckMenuItem
+import de.mknblch.eqmap.fx.MapPane
+import de.mknblch.eqmap.zone.LayerComparator
+import de.mknblch.eqmap.zone.ZoneMap
 import javafx.application.Platform
-import javafx.beans.property.BooleanProperty
-import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.property.SimpleDoubleProperty
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.Background
-import javafx.scene.layout.BackgroundFill
 import javafx.scene.layout.StackPane
-import javafx.scene.layout.VBox
-import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ConfigurableApplicationContext
-import org.springframework.context.annotation.Bean
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
-import org.springframework.stereotype.Controller
 import java.net.URL
 import java.util.*
 import javax.annotation.PreDestroy
@@ -60,6 +59,9 @@ class MapController : Initializable {
     private lateinit var zoneMenu: Menu
 
     @FXML
+    private lateinit var poiLayerMenu: Menu
+
+    @FXML
     private lateinit var menuBar: MenuBar
 
     @FXML
@@ -69,27 +71,27 @@ class MapController : Initializable {
     private lateinit var blackWhiteChooser: BlackWhiteChooser
 
     @FXML
-    private lateinit var showPoi: CheckMenuItem
+    private lateinit var showPoi: CustomCheckMenuItem
 
     @FXML
-    private lateinit var centerCheckMenuItem: CheckMenuItem
+    private lateinit var centerCheckMenuItem: CustomCheckMenuItem
 
     @FXML
-    private lateinit var zLayerCheckMenuItem: CheckMenuItem
+    private lateinit var zLayerCheckMenuItem: CustomCheckMenuItem
 
     @FXML
-    lateinit var lockWindowMenuItem: CheckMenuItem
+    lateinit var lockWindowMenuItem: CustomCheckMenuItem
 
     @FXML
-    private lateinit var transparentWindow: CheckMenuItem
+    private lateinit var transparentWindow: CustomCheckMenuItem
 
     @Qualifier("useZLayerViewDistance")
     @Autowired
-    private lateinit var  useZLayerViewDistance : SimpleBooleanProperty
+    private lateinit var useZLayerViewDistance: SimpleBooleanProperty
 
     @Qualifier("centerPlayerCursor")
     @Autowired
-    private lateinit var  centerPlayerCursor : SimpleBooleanProperty
+    private lateinit var centerPlayerCursor: SimpleBooleanProperty
 
     @Qualifier("showPoiProperty")
     @Autowired
@@ -132,12 +134,12 @@ class MapController : Initializable {
         centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
         useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
         showPoiProperty.bind(showPoi.selectedProperty())
-        useZLayerViewDistance.addListener { _,_,_ ->
-            mapPane.showAllNodes()
+        useZLayerViewDistance.addListener { _, _, _ ->
+            mapPane.redraw()
         }
         val primaryStage: Stage = context.getBean("primaryStage") as Stage
         transparentWindow.selectedProperty().addListener { _, _, newValue ->
-            primaryStage.opacity = if(newValue) 0.7 else 1.0
+            primaryStage.opacity = if (newValue) 0.7 else 1.0
         }
         registerMaximizeListener(primaryStage)
         registerDragListener(primaryStage)
@@ -157,7 +159,7 @@ class MapController : Initializable {
         resetMenuItem.setOnAction {
             directoryWatcherService.reset()
         }
-        mapPane.showAllNodes()
+        mapPane.redraw()
     }
 
     private fun populateZoneMenu() {
@@ -165,6 +167,19 @@ class MapController : Initializable {
             val element = MenuItem(map.name)
             element.setOnAction {
                 mapPane.setMapContent(map)
+                poiLayerMenu.items.clear()
+                map.layer.sortedWith(LayerComparator).forEach { layer ->
+                    val checkMenuItem = CustomCheckMenuItem(layer.name.removeSuffix(".txt")).also {
+                        it.checkbox.selectedProperty().set(true)
+                        it.checkbox.selectedProperty().addListener { _, _, v ->
+                            layer.show = v
+                            mapPane.redraw()
+                        }
+                        it.isHideOnClick = false
+                    }
+                    poiLayerMenu.items.add(checkMenuItem)
+                }
+
             }
             zoneMenu.items.add(element)
         }
@@ -178,6 +193,9 @@ class MapController : Initializable {
             if (it.button == MouseButton.PRIMARY && it.clickCount == 2) {
                 primaryStage.isMaximized = !primaryStage.isMaximized
                 mapPane.centerMap()
+            }
+            if (it.button == MouseButton.SECONDARY && it.clickCount == 2) {
+                primaryStage.isIconified = true
             }
             it.consume()
         }

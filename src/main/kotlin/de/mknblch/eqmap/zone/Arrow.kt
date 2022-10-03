@@ -1,4 +1,4 @@
-package de.mknblch.eqmap.map
+package de.mknblch.eqmap.zone
 
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D

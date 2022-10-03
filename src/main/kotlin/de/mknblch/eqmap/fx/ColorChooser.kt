@@ -1,6 +1,5 @@
-package de.mknblch.eqmap.common
+package de.mknblch.eqmap.fx
 
-import de.mknblch.eqmap.MapPane
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generateMonochromePalette
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generatePalette
 import javafx.beans.NamedArg
@@ -8,18 +7,12 @@ import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyObjectProperty
 import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.event.Event
 import javafx.event.EventHandler
-import javafx.event.EventType
 import javafx.geometry.Bounds
 import javafx.geometry.Insets
 import javafx.scene.control.Button
 import javafx.scene.control.Control
-import javafx.scene.input.MouseEvent
 import javafx.scene.layout.GridPane
-import javafx.scene.layout.HBox
-import javafx.scene.layout.Priority
-import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import org.slf4j.LoggerFactory
@@ -48,7 +41,7 @@ internal open class ColorChooser @JvmOverloads constructor(
     /**
      * Preferred size for a web palette tile
      */
-    private val prefTileSize: DoubleProperty = SimpleDoubleProperty(Companion.MIN_TILE_SIZE)
+    private val prefTileSize: DoubleProperty = SimpleDoubleProperty(MIN_TILE_SIZE)
 
 
     init {
@@ -68,7 +61,7 @@ internal open class ColorChooser @JvmOverloads constructor(
             // position the button in the grid.
             setRowIndex(colorChoice, i / nColumns.toInt())
             setColumnIndex(colorChoice, i % nColumns.toInt())
-            colorChoice.setMinSize(Companion.MIN_TILE_SIZE, Companion.MIN_TILE_SIZE)
+            colorChoice.setMinSize(MIN_TILE_SIZE, MIN_TILE_SIZE)
             colorChoice.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE)
             // add a mouseover tooltip to display more info on the colour being examined.
             val graphic = Rectangle(30.0, 30.0, Color.web(colorHex))
@@ -104,7 +97,7 @@ internal open class ColorChooser @JvmOverloads constructor(
         layoutBoundsProperty()
             .addListener { _, _, newBounds: Bounds ->
                 prefTileSize.set(
-                    max(Companion.MIN_TILE_SIZE, min(newBounds.width / nColumns, newBounds.height / nRows))
+                    max(MIN_TILE_SIZE, min(newBounds.width / nColumns, newBounds.height / nRows))
                 )
                 for (child in childrenUnmodifiable) {
                     val tile = child as Control
@@ -123,7 +116,7 @@ internal open class ColorChooser @JvmOverloads constructor(
         private const val MIN_TILE_SIZE = 3.0
 
         fun calculateColumnSize(elements: Int): Double {
-            return floor(sqrt(elements.toDouble()) * 2 / Companion.GOLDEN_RATIO)
+            return floor(sqrt(elements.toDouble()) * 2 / GOLDEN_RATIO)
         }
     }
 }

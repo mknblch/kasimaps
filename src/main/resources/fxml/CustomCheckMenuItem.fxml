@@ -1,0 +1,4 @@
+<?import javafx.scene.control.CustomMenuItem ?>
+
+<fx:root type="CustomMenuItem" fx:controller="de.mknblch.eqmap.fx.CustomCheckMenuItem" xmlns:fx="http://javafx.com/fxml">
+</fx:root>

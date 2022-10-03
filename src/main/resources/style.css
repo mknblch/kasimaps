@@ -1,5 +1,4 @@
 
-
 .root {
     -fx-base: rgba(60, 63, 65, 255); // dark
     -fx-background: derive(-fx-base,26.4%);
@@ -11,4 +10,19 @@
     -fx-pref-height: 100;
     -fx-min-height: 60;
     -fx-max-height: 400;
+}
+
+.customCheckBox {
+}
+
+.customCheckMenuItem {
+}
+
+.mapLine {
+}
+
+.mapPOI {
+}
+
+.simpleMapPOI {
 }
