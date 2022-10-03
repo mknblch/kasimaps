@@ -229,7 +229,7 @@ class MapPane : StackPane() {
             }
             // scroll handler
             addEventFilter(ScrollEvent.SCROLL) { mouseEvent ->
-                onScroll(sign(mouseEvent.deltaY), Point2D(mouseEvent.x, mouseEvent.y))
+                onScroll(mouseEvent)
                 mouseEvent.consume()
             }
         }
@@ -275,8 +275,28 @@ class MapPane : StackPane() {
         }
     }
 
-    private fun onScroll(wheelDelta: Double, mousePoint: Point2D) {
+    private fun onScroll(event: ScrollEvent) {
+        val wheelDelta: Double = sign(event.deltaY)
+        val mousePoint = Point2D(event.x, event.y)
         val v = wheelDelta * 0.05
+
+        if (event.isControlDown) {
+            changeZAxis(wheelDelta)
+        } else {
+            zoomAt(mousePoint, v)
+            // adapt stroke width when zooming
+            strokeWidthProperty.set((1.0 / group.scaleY))
+        }
+    }
+
+    private fun changeZAxis(v: Double) {
+        println("v: $v")
+        zOrdinate.set(zOrdinate.get() + v * 10)
+        redraw()
+        println(zOrdinate.get())
+    }
+
+    private fun zoomAt(mousePoint: Point2D, v: Double) {
         val localBeforeScroll = group.parentToLocal(mousePoint)
         // adapt scale
         val f = min(
@@ -288,8 +308,6 @@ class MapPane : StackPane() {
         val clickInParent = group.localToParent(localBeforeScroll)
         // center target point at mouse pointer
         translateTo(clickInParent, mousePoint)
-        // adapt stroke width when zooming
-        strokeWidthProperty.set((1.0 / group.scaleY))
     }
 
     fun zoomToBounds() {

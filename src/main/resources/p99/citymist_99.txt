@@ -1,0 +1,15 @@
+K 529.0, -14.0, 80, 30, 80, 2, A_Haze_Golem
+K 133.0, 116.0, 80, 30, 80, 2, A_Haze_Golem
+K -441.0, 26.0, 80, 30, 80, 2, A_Phantom
+K 281.0, -212.0, 80, 30, 80, 2, A_Phantom
+K 314.0, -79.0, 80, 30, 80, 2, A_Phantom
+K -387.0, -22.0, 80, 30, 80, 2, A_Vapor_Golem
+K -95.0, -159.0, 80, 30, 80, 2, A_Vapor_Golem
+K 530.0, 15.0, 80, 30, 80, 2, A_Vapor_Golem
+K 133.0, 116.0, 80, 30, 80, 2, A_Vapor_Golem
+K 193.0, -246.0, 80, 30, 80, 2, A_Vapor_Golem
+K 354.0, 242.0, 80, 30, 80, 2, Captain_of_the_Guard
+K 496.0, 231.0, 80, 30, 80, 2, Captain_of_the_Guard
+K -85.0, 0.0, 80, 30, 80, 2, Lhranc
+K 438.0, 225.0, 80, 30, 80, 2, Spectral_Courier
+K -226.0, -160.0, 80, 30, 80, 2, Wraith_of_Jaxion

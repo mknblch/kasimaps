@@ -1,0 +1,12 @@
+K 58.0, -15.0, 80, 30, 80, 2, An_odd_mole
+K -80.0, 30.0, 80, 30, 80, 2, A_skeletal_cook
+K -192.0, -162.0, 80, 30, 80, 2, A_Tower_Guard
+K -264.0, 115.0, 80, 30, 80, 2, Bargynn
+K 4.0, 1028.0, 80, 30, 80, 2, Burynai_burrower
+K -1220.0, 95.0, 80, 30, 80, 2, Burynai_burrower
+K -157.0, -57.0, 80, 30, 80, 2, Burynai_Sapper
+K -346.0, -208.0, 80, 30, 80, 2, Burynai_Sapper
+K -620.0, -1450.0, 80, 30, 80, 2, Burynai_Sapper
+K -31.0, 0.0, 80, 30, 80, 2, Fingered_skeleton
+K 49.0, -81.0, 80, 30, 80, 2, Thick_boned_skeleton
+K 121.0, 48.0, 80, 30, 80, 2, Undead_crusader

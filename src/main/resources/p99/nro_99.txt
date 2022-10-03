@@ -1,0 +1,17 @@
+K -1212.0, 1371.0, 80, 30, 80, 2, A_Madman
+K 397.0, 413.0, 80, 30, 80, 2, An_orc_raider
+K -1070.0, 987.0, 80, 30, 80, 2, A_Shriveled_Mummy
+K -370.0, 125.0, 80, 30, 80, 2, A_Shriveled_Mummy
+K 173.0, 218.0, 80, 30, 80, 2, A_Shriveled_Mummy
+K -614.0, 1503.0, 80, 30, 80, 2, A_Shriveled_Mummy
+K 391.0, -1311.0, 80, 30, 80, 2, Dorn_B`Dynn
+K 855.0, -792.0, 80, 30, 80, 2, Frankel_the_Pirate
+K -304.0, -2885.0, 80, 30, 80, 2, Guard_Brendyl
+K -464.0, -3458.0, 80, 30, 80, 2, Guard_Fintran
+K -459.0, -3381.0, 80, 30, 80, 2, Guard_Stoutman
+K -489.0, -3466.0, 80, 30, 80, 2, Innkeep_Tozie
+K -503.0, -3415.0, 80, 30, 80, 2, Innkeep_Valon
+K 754.0, -2185.0, 80, 30, 80, 2, Juni_Sandfisher
+K 865.0, -2158.0, 80, 30, 80, 2, Puntar_Sandfisher
+K -488.0, -3371.0, 80, 30, 80, 2, Spoolie_Gee
+K 790.0, -2294.0, 80, 30, 80, 2, Tira_Sandfisher

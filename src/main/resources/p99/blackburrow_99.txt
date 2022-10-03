@@ -1,0 +1,15 @@
+K -356.0, -144.0, 80, 30, 80, 2, A_Burly_Gnoll
+K -380.0, -53.0, 80, 30, 80, 2, A_Burly_Gnoll
+K -219.0, -166.0, 80, 30, 80, 2, A_Burly_Gnoll
+K -385.0, -50.0, 80, 30, 80, 2, A_Gnoll_Brewer
+K 341.0, -23.0, 80, 30, 80, 2, A_Gnoll_Commander
+K 115.0, -292.0, 80, 30, 80, 2, A_Gnoll_Commander
+K -117.0, 86.0, 80, 30, 80, 2, A_Gnoll_Tactician
+K 119.0, -6.0, 80, 30, 80, 2, A_Razorgill
+K -146.0, -196.0, 80, 30, 80, 2, Lord_Elgnub
+K -385.0, -50.0, 80, 30, 80, 2, Master_Brewer
+K 115.0, -292.0, 80, 30, 80, 2, Refugee_Splitpaw
+K -365.0, -253.0, 80, 30, 80, 2, Splitpaw_Commander
+K 320.0, -51.0, 80, 30, 80, 2, The_gnoll_high_shaman
+K 38.0, 97.0, 80, 30, 80, 2, The_gnoll_high_shaman
+K 130.0, -262.0, 80, 30, 80, 2, The_gnoll_high_shaman

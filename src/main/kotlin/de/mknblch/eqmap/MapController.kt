@@ -141,7 +141,7 @@ class MapController : Initializable {
         transparentWindow.selectedProperty().addListener { _, _, newValue ->
             primaryStage.opacity = if (newValue) 0.7 else 1.0
         }
-        registerMaximizeListener(primaryStage)
+        registerMaxMinListener(primaryStage)
         registerDragListener(primaryStage)
         colorChooser.chosenColorProperty().addListener { _, _, v ->
             mapPane.deriveColor(v)
@@ -185,7 +185,7 @@ class MapController : Initializable {
         }
     }
 
-    private fun registerMaximizeListener(primaryStage: Stage) {
+    private fun registerMaxMinListener(primaryStage: Stage) {
         menuBar.setOnMouseClicked {
             if (lockWindowMenuItem.selectedProperty().get()) {
                 return@setOnMouseClicked

@@ -1,0 +1,16 @@
+K 649.0, 469.0, 80, 30, 80, 2, A_deepwater_crocodile
+K -1396.0, 1475.0, 80, 30, 80, 2, A_young_ronin
+K -782.0, -1553.0, 80, 30, 80, 2, Cazel
+K 667.0, 236.0, 80, 30, 80, 2, Cazel
+K 0.0, -493.0, 80, 30, 80, 2, Gadallion
+K 417.0, 532.0, 80, 30, 80, 2, Hurgo_Felcind
+K 261.0, 1321.0, 80, 30, 80, 2, Innkeep_Marnan
+K 306.0, 1307.0, 80, 30, 80, 2, Innkeep_Tizzy
+K -71.0, -512.0, 80, 30, 80, 2, Isslana
+K 746.0, -943.0, 80, 30, 80, 2, Lockjaw
+K 867.0, 1301.0, 80, 30, 80, 2, Lockjaw
+K 375.0, 554.0, 80, 30, 80, 2, Mantrek_Needlebender
+K 434.0, 594.0, 80, 30, 80, 2, Ranzall_Netcaster
+K 6.0, -597.0, 80, 30, 80, 2, Synthan
+K -1347.0, 1788.0, 80, 30, 80, 2, Taldrik_Stumpystout
+K -51.0, -613.0, 80, 30, 80, 2, Transan

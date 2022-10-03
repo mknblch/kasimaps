@@ -29,15 +29,7 @@
             <Menu fx:id="optionsMenu" mnemonicParsing="false" text="Options">
                 <items>
                     <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
-                    <Menu mnemonicParsing="false" text="Z-Axis">
-                        <items>
-                            <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" hideOnClick="false" mnemonicParsing="false" text="Filter Z-Axis" />
-                            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Unspecified Action">
-                        <content>
-                           <Slider />
-                        </content></CustomMenuItem>
-                        </items>
-                    </Menu>
+                      <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" hideOnClick="false" mnemonicParsing="false" text="Filter Z-Axis" />
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <Menu mnemonicParsing="false" text="Background">
                         <items>
