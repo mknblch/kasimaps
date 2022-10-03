@@ -17,11 +17,11 @@ abstract class LogParser(val logfile: File) : AutoCloseable {
 
     init {
 
-        randomAccessFile.seek(randomAccessFile.length())
-
         GlobalScope.async(Dispatchers.IO) {
             logger.debug("starting parser $logfile")
             readLoop()
+            randomAccessFile.close()
+            logger.debug("$logfile closed")
         }
     }
 
@@ -29,6 +29,8 @@ abstract class LogParser(val logfile: File) : AutoCloseable {
         var chr: Int
         var cr = false
         val builder = StringBuffer()
+
+        randomAccessFile.seek(randomAccessFile.length())
 
         Loop@ while (active.get()) {
             chr = randomAccessFile.read()
@@ -53,16 +55,13 @@ abstract class LogParser(val logfile: File) : AutoCloseable {
                 }
             }
         }
-        logger.debug("$logfile closed")
-        randomAccessFile.close()
-
+        logger.debug("read loop ended")
     }
 
     abstract fun emit(value: String)
 
     override fun close() {
         active.set(false)
-
     }
 
     companion object {
