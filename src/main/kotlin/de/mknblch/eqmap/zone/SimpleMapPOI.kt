@@ -1,11 +1,10 @@
 package de.mknblch.eqmap.zone
 
 import javafx.scene.Group
-import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
-import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
+
 
 private const val POI_SIZE = 3
 
@@ -19,8 +18,10 @@ data class SimpleMapPOI(
         it.stroke = color
         it.fill = color
     },
-    val text: Text = Text(x + POI_SIZE + 1, y + POI_SIZE, name),
-    override val zRange: ClosedRange<Double> = (-Double.MAX_VALUE .. Double.MAX_VALUE)
+    val text: Text = Text(x + POI_SIZE + 1, y + POI_SIZE, name).also {
+        it.styleClass.add("mapPOIText")
+    },
+    override val zRange: ClosedRange<Double> = (-Double.MAX_VALUE..Double.MAX_VALUE)
 ) : MapNode, Group(circle, text) {
 
     override fun setShow(show: Boolean) {
@@ -34,7 +35,7 @@ data class SimpleMapPOI(
     }
 
     init {
-        styleClass.add("simpleMapPOI")
+        styleClass.add("mapPOI")
     }
 
     companion object {

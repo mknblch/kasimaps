@@ -37,7 +37,7 @@ object ResizeHelper {
         resizeListener.maxHeight = Double.MAX_VALUE
 
         stage.scene.root.childrenUnmodifiable.forEach {
-            addListenerDeeply(it, resizeListener, 1)
+            addListenerDeeply(it, resizeListener, 0)
         }
     }
 
@@ -119,10 +119,12 @@ object ResizeHelper {
                             if (stage.height > minHeight || mouseEvent.sceneY < 0) {
                                 setStageHeight(stage.y - mouseEvent.screenY + stage.height)
                                 stage.y = mouseEvent.screenY
+                                mouseEvent.consume()
                             }
                         } else {
                             if (stage.height > minHeight || mouseEvent.sceneY + startY - stage.height > 0) {
                                 setStageHeight(mouseEvent.sceneY + startY)
+                                mouseEvent.consume()
                             }
                         }
                     }
@@ -132,15 +134,16 @@ object ResizeHelper {
                             if (stage.width > minWidth || mouseEvent.sceneX < 0) {
                                 setStageWidth(stage.x - mouseEvent.screenX + stage.width)
                                 stage.x = mouseEvent.screenX
+                                mouseEvent.consume()
                             }
                         } else {
                             if (stage.width > minWidth || mouseEvent.sceneX + startX - stage.width > 0) {
                                 setStageWidth(mouseEvent.sceneX + startX)
+                                mouseEvent.consume()
                             }
                         }
                     }
                     resizing = false
-                    mouseEvent.consume()
                 }
             }
 

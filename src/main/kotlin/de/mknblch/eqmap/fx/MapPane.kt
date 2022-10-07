@@ -7,11 +7,13 @@ import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
+import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
+import javafx.scene.layout.Background
 import javafx.scene.layout.Border
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
@@ -23,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
+import java.awt.ScrollPane
 import javax.annotation.PostConstruct
 import kotlin.math.max
 import kotlin.math.min
@@ -34,7 +37,9 @@ import kotlin.math.sign
 class MapPane : StackPane() {
 
     private var cursor = Arrow(0.0, 0.0, 12.0, Color.GOLDENROD)
-    private val cursorText = Text(0.0, 0.0, "")
+    private val cursorText = Text(0.0, 0.0, "").also {
+        it.isVisible = false
+    }
     private var mouseAnchorX: Double = 0.0
     private var mouseAnchorY: Double = 0.0
     private var initialTranslateX: Double = 0.0
@@ -70,7 +75,9 @@ class MapPane : StackPane() {
     fun setMapContent(map: ZoneMap) = synchronized(this) {
         cursor.isVisible = false
         this.map = map
-        this.children.add(prepare(map))
+        children.clear()
+        children.add(prepare(map))
+        children.add(cursorText)
         layout()
         redraw()
         resetColor(colorTransformer)
@@ -78,7 +85,6 @@ class MapPane : StackPane() {
         centerMap()
         zoomToBounds()
         layout()
-
     }
 
     fun setColorTransformer(colorTransformer: ColorTransformer) {
@@ -125,26 +131,25 @@ class MapPane : StackPane() {
         resetColor(colorTransformer)
         map.elements.forEach { node ->
             when (node) {
-                is MapLine -> node.stroke = (node.stroke as Color).deriveColor(
+                is MapLine -> node.stroke = node.color.deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
                     newColor.opacity
                 )
-                is MapPOI -> node.text.fill = (node.text.fill as Color).deriveColor(
+                is MapPOI -> node.text.fill = node.color.deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
                     newColor.opacity
                 )
-                is SimpleMapPOI -> node.text.fill = (node.text.fill as Color).deriveColor(
+                is SimpleMapPOI -> node.text.fill = node.color.deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
                     newColor.opacity
                 )
             }
-
         }
         cursor.fill = cursor.color.deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
     }
@@ -214,7 +219,6 @@ class MapPane : StackPane() {
         with(enclosure) {
             // properties
             border = Border.EMPTY
-
             // pressed handler
             addEventFilter(MouseEvent.MOUSE_PRESSED) { mouseEvent ->
                 onMousePressed(mouseEvent)
@@ -252,6 +256,17 @@ class MapPane : StackPane() {
         map.elements.forEach { node ->
             // increase stroke width when zooming out
             (node as? Line)?.strokeWidthProperty()?.bind(strokeWidthProperty)
+        }
+    }
+
+    fun setBackgroundColor(color: Color) {
+        background = Background.fill(color)
+        setCursorColor(color.invert())
+        cursorText.stroke = color.invert()
+        map.elements.forEach { node ->
+            // increase stroke width when zooming out
+            (node as? MapPOI)?.text?.stroke = color.invert()
+            (node as? SimpleMapPOI)?.text?.stroke = color.invert()
         }
     }
 
@@ -337,7 +352,6 @@ class MapPane : StackPane() {
         showPoiProperty.addListener { _, _, _ ->
             redraw()
         }
-        children.add(cursorText)
     }
 
     fun shotCursorText(v: Boolean) {

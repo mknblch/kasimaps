@@ -1,64 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import de.mknblch.eqmap.fx.*?>
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<StackPane fx:id="parentPane" cacheShape="false" centerShape="false" maxHeight="-Infinity" maxWidth="-Infinity"
-           minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" scaleShape="false"
-           xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="de.mknblch.eqmap.MapController">
+
+<StackPane fx:id="parentPane" cacheShape="false" centerShape="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" scaleShape="false" xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.mknblch.eqmap.MapController">
     <MenuBar fx:id="menuBar" StackPane.alignment="TOP_LEFT">
         <menus>
             <Menu fx:id="appMenu" mnemonicParsing="false" text="App">
                 <items>
-                    <CustomCheckMenuItem fx:id="lockWindowMenuItem" mnemonicParsing="false" text="Lock Window"/>
-                    <CustomCheckMenuItem fx:id="transparentWindow" mnemonicParsing="false" text="Transparent Window"/>
-                    <SeparatorMenuItem mnemonicParsing="false"/>
-                    <MenuItem fx:id="resetMenuItem" mnemonicParsing="false" text="Reset"/>
-                    <SeparatorMenuItem mnemonicParsing="false"/>
-                    <MenuItem mnemonicParsing="false" onAction="#exit" text="Exit"/>
+                    <CustomCheckMenuItem fx:id="lockWindowMenuItem" mnemonicParsing="false" text="Lock Window" />
+                    <CustomCheckMenuItem fx:id="transparentWindow" mnemonicParsing="false" text="Transparent Window" />
+                    <SeparatorMenuItem mnemonicParsing="false" />
+                    <MenuItem fx:id="resetMenuItem" mnemonicParsing="false" text="Reset" />
+                    <SeparatorMenuItem mnemonicParsing="false" />
+                    <MenuItem mnemonicParsing="false" onAction="#exit" text="Exit" />
                 </items>
             </Menu>
-            <Menu fx:id="zoneMenu" mnemonicParsing="false" styleClass="custom-context-menu" text="Zone"/>
+            <Menu fx:id="zoneMenu" mnemonicParsing="false" styleClass="custom-context-menu" text="Zone" />
             <Menu mnemonicParsing="false" text="Layer">
                 <items>
-                    <CustomCheckMenuItem fx:id="showPoi" mnemonicParsing="false" selected="true" text="Show POI"/>
-                    <SeparatorMenuItem mnemonicParsing="false"/>
-                    <Menu fx:id="poiLayerMenu" mnemonicParsing="false" text="Layer"/>
+                    <CustomCheckMenuItem fx:id="showPoi" mnemonicParsing="false" selected="true" text="Show POI" />
+                    <SeparatorMenuItem mnemonicParsing="false" />
+                    <Menu fx:id="poiLayerMenu" mnemonicParsing="false" text="Layer" />
                 </items>
             </Menu>
             <Menu fx:id="optionsMenu" mnemonicParsing="false" text="Options">
                 <items>
-                    <CustomCheckMenuItem fx:id="showCursorText" mnemonicParsing="false" selected="true"
-                                         text="Cursor Position"/>
-                    <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true"
-                                         text="Center Player"/>
-                    <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" hideOnClick="false" mnemonicParsing="false"
-                                         text="Filter Z-Axis"/>
-                    <SeparatorMenuItem mnemonicParsing="false"/>
+                    <CustomCheckMenuItem fx:id="showCursorText" mnemonicParsing="false" selected="false" text="Cursor Position" />
+                    <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
+                    <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" hideOnClick="false" mnemonicParsing="false" text="Filter Z-Axis" />
+                    <SeparatorMenuItem mnemonicParsing="false" />
                     <Menu mnemonicParsing="false" text="Background">
                         <items>
                             <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Unspecified Action">
                                 <content>
-                                    <de.mknblch.eqmap.fx.BlackWhiteChooser fx:id="blackWhiteChooser"/>
+                                    <de.mknblch.eqmap.fx.BlackWhiteChooser fx:id="blackWhiteChooser" />
                                 </content>
                             </CustomMenuItem>
                         </items>
                     </Menu>
                     <Menu mnemonicParsing="false" text="Color">
                         <items>
-                            <RadioMenuItem mnemonicParsing="false" onAction="#setOriginalTransformer" selected="true"
-                                           text="Original">
+                            <RadioMenuItem mnemonicParsing="false" onAction="#setOriginalTransformer" selected="true" text="Original">
                                 <toggleGroup>
-                                    <ToggleGroup fx:id="colorGroup"/>
+                                    <ToggleGroup fx:id="colorGroup" />
                                 </toggleGroup>
                             </RadioMenuItem>
-                            <RadioMenuItem mnemonicParsing="false" onAction="#setZColorTransformer" text="ZColor"
-                                           toggleGroup="$colorGroup"/>
+                            <RadioMenuItem mnemonicParsing="false" onAction="#setZColorTransformer" text="ZColor" toggleGroup="$colorGroup" />
                             <CustomMenuItem hideOnClick="false" mnemonicParsing="false">
                                 <content>
-                                    <de.mknblch.eqmap.fx.ColorChooser fx:id="colorChooser"/>
+                                    <de.mknblch.eqmap.fx.ColorChooser fx:id="colorChooser" />
                                 </content>
                             </CustomMenuItem>
                         </items>
@@ -69,11 +61,6 @@
     </MenuBar>
     <MapPane fx:id="mapPane" alignment="TOP_LEFT" minHeight="10.0" minWidth="10.0" pickOnBounds="false" viewOrder="1.0"
              StackPane.alignment="CENTER" VBox.vgrow="ALWAYS">
-        <StackPane.margin>
-            <Insets/>
-        </StackPane.margin>
-        <padding>
-            <Insets bottom="2.0" left="2.0" right="2.0"/>
-        </padding>
+
     </MapPane>
 </StackPane>

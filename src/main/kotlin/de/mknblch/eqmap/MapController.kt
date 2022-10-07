@@ -16,10 +16,11 @@ import javafx.application.Platform
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
+import javafx.geometry.Insets
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
-import javafx.scene.layout.Background
-import javafx.scene.layout.StackPane
+import javafx.scene.layout.*
+import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -109,7 +110,10 @@ class MapController : Initializable {
         zones.firstOrNull { it.name.equals(e.zone, true) }?.also {
             Platform.runLater {
                 mapPane.setMapContent(it)
+                populateLayerMenu(it)
             }
+        } ?: kotlin.run {
+            logger.error("no mapping for zone '${e.zone}' found in ${zones.map { it.name }}")
         }
     }
 
@@ -151,8 +155,7 @@ class MapController : Initializable {
         }
         blackWhiteChooser.chosenColorProperty().addListener { _, _, v ->
             logger.debug("setting background to $v")
-            mapPane.background = Background.fill(v)
-            mapPane.setCursorColor(v.invert())
+            mapPane.setBackgroundColor(v)
         }
         lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
             primaryStage.isAlwaysOnTop = v
@@ -167,6 +170,7 @@ class MapController : Initializable {
         showCursorText.selectedProperty().addListener { _, _, v ->
             mapPane.shotCursorText(v)
         }
+//        parentPane.border = Border(BorderStroke(Color.TRANSPARENT, BorderStrokeStyle.NONE, CornerRadii.EMPTY, BorderWidths(5.0)))
         mapPane.redraw()
     }
 
@@ -175,21 +179,24 @@ class MapController : Initializable {
             val element = MenuItem(map.name)
             element.setOnAction {
                 mapPane.setMapContent(map)
-                poiLayerMenu.items.clear()
-                map.layer.sortedWith(LayerComparator).forEach { layer ->
-                    val checkMenuItem = CustomCheckMenuItem(layer.name.removeSuffix(".txt")).also {
-                        it.checkbox.selectedProperty().set(true)
-                        it.checkbox.selectedProperty().addListener { _, _, v ->
-                            layer.show = v
-                            mapPane.redraw()
-                        }
-                        it.isHideOnClick = false
-                    }
-                    poiLayerMenu.items.add(checkMenuItem)
-                }
-
+                populateLayerMenu(map)
             }
             zoneMenu.items.add(element)
+        }
+    }
+
+    private fun populateLayerMenu(map: ZoneMap) {
+        poiLayerMenu.items.clear()
+        map.layer.sortedWith(LayerComparator).forEach { layer ->
+            val checkMenuItem = CustomCheckMenuItem(layer.name.removeSuffix(".txt")).also {
+                it.checkbox.selectedProperty().set(true)
+                it.checkbox.selectedProperty().addListener { _, _, v ->
+                    layer.show = v
+                    mapPane.redraw()
+                }
+                it.isHideOnClick = false
+            }
+            poiLayerMenu.items.add(checkMenuItem)
         }
     }
 

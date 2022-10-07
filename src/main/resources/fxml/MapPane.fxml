@@ -1,2 +1,4 @@
-<fx:root type="MapPane" fx:controller="de.mknblch.eqmap.fx.MapPane" xmlns:fx="http://javafx.com/fxml">
+
+<?import javafx.scene.layout.*?>
+<fx:root type="StackPane" fx:controller="de.mknblch.eqmap.fx.MapPane" xmlns:fx="http://javafx.com/fxml">
 </fx:root>
