@@ -4,7 +4,7 @@
 
 - install [Java](https://openjdk.org/) 
 - download current [version](https://github.com/mknblch/kasimaps/tree/develop/dist/1.0beta)
-- adapt **eq_directory** in `application.properties`
+- adapt **eq_directory** in `application.properties` (unix style path's using slashes instead of backslashes!)
 - run using `java -jar Kasimaps.jar` or `start.bat` on windows 
 
 ## Usage

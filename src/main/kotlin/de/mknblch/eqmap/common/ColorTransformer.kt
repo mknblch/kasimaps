@@ -4,7 +4,7 @@ import de.mknblch.eqmap.common.ColorTransformer.Companion.colorizeNode
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generatePalette
 import de.mknblch.eqmap.zone.MapLine
 import de.mknblch.eqmap.zone.MapNode
-import de.mknblch.eqmap.zone.MapPOI
+import de.mknblch.eqmap.zone.MapPOI3D
 import javafx.scene.paint.Color
 import kotlin.math.min
 
@@ -42,7 +42,7 @@ interface ColorTransformer {
         fun colorizeNode(mapObject: MapNode, color: Color) {
             when (mapObject) {
                 is MapLine -> mapObject.stroke = color
-                is MapPOI -> mapObject.text.fill = color
+                is MapPOI3D -> mapObject.text.fill = color
             }
         }
     }

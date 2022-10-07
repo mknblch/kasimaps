@@ -5,12 +5,12 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
 import javafx.scene.text.Text
 
-
 private const val POI_SIZE = 3
 
-data class SimpleMapPOI(
+data class MapPOI3D(
     val x: Double,
     val y: Double,
+    val z: Double,
     override val color: Color,
     val type: Int,
     val name: String,
@@ -18,10 +18,8 @@ data class SimpleMapPOI(
         it.stroke = color
         it.fill = color
     },
-    val text: Text = Text(x + POI_SIZE + 1, y + POI_SIZE, name).also {
-        it.styleClass.add("mapPOIText")
-    },
-    override val zRange: ClosedRange<Double> = (-Double.MAX_VALUE..Double.MAX_VALUE)
+    val text: Text = Text(x + POI_SIZE + 1, y + POI_SIZE, name),
+    override val zRange: ClosedRange<Double> = (z..z)
 ) : MapNode, Group(circle, text) {
 
     override fun setShow(show: Boolean) {
@@ -40,13 +38,14 @@ data class SimpleMapPOI(
 
     companion object {
 
-        fun buildFromString(vararg line: String): SimpleMapPOI {
-            return SimpleMapPOI(
+        fun buildFromString(vararg line: String): MapPOI3D {
+            return MapPOI3D(
                 line[0].toDouble(),
                 line[1].toDouble(),
-                Color.color(line[2].toDouble() / 255.0, line[3].toDouble() / 255.0, line[4].toDouble() / 255.0, 1.0),
-                line[5].toInt(),
-                line[6].replace('_', ' '),
+                line[2].toDouble(),
+                Color.color(line[3].toDouble() / 255.0, line[4].toDouble() / 255.0, line[5].toDouble() / 255.0, 1.0),
+                line[6].toInt(),
+                line[7].replace('_', ' '),
             )
         }
     }

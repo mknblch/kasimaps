@@ -5,7 +5,6 @@ import javafx.scene.paint.Color
 interface MapNode {
 
     val color: Color
-
     val zRange: ClosedRange<Double>
 
     fun inRangeTo(range: ClosedRange<Double>) = zRange.contains(range.start) ||
@@ -26,8 +25,8 @@ interface MapNode {
             return try {
                 when (head) {
                     "L" -> MapLine.buildFromLine(*line)
-                    "P" -> MapPOI.buildFromString(*line)
-                    "K" -> SimpleMapPOI.buildFromString(*line)
+                    "P" -> MapPOI3D.buildFromString(*line)
+                    "K" -> MapPOI2D.buildFromString(*line)
                     "#" -> null // skip
                     else -> throw IllegalArgumentException("invalid header '$head'")
                 }

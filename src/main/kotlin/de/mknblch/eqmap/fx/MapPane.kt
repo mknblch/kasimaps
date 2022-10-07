@@ -7,7 +7,6 @@ import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
-import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.input.MouseButton
@@ -25,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
-import java.awt.ScrollPane
 import javax.annotation.PostConstruct
 import kotlin.math.max
 import kotlin.math.min
@@ -137,13 +135,13 @@ class MapPane : StackPane() {
                     newColor.brightness,
                     newColor.opacity
                 )
-                is MapPOI -> node.text.fill = node.color.deriveColor(
+                is MapPOI3D -> node.text.fill = node.color.deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
                     newColor.opacity
                 )
-                is SimpleMapPOI -> node.text.fill = node.color.deriveColor(
+                is MapPOI2D -> node.text.fill = node.color.deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
@@ -187,7 +185,7 @@ class MapPane : StackPane() {
                 }
             }
             // hide POI if switch off
-            if ((node is MapPOI || node is SimpleMapPOI) && !showPoiProperty.get()) {
+            if ((node is MapPOI3D || node is MapPOI2D) && !showPoiProperty.get()) {
                 node.setShow(false)
                 return@forEach
             }
@@ -222,6 +220,9 @@ class MapPane : StackPane() {
             // pressed handler
             addEventFilter(MouseEvent.MOUSE_PRESSED) { mouseEvent ->
                 onMousePressed(mouseEvent)
+            }
+            addEventFilter(MouseEvent.MOUSE_RELEASED) { mouseEvent ->
+                onMouseReleased(mouseEvent)
             }
             // dragged handler
             addEventFilter(MouseEvent.MOUSE_DRAGGED) { mouseEvent ->
@@ -265,8 +266,8 @@ class MapPane : StackPane() {
         cursorText.stroke = color.invert()
         map.elements.forEach { node ->
             // increase stroke width when zooming out
-            (node as? MapPOI)?.text?.stroke = color.invert()
-            (node as? SimpleMapPOI)?.text?.stroke = color.invert()
+            (node as? MapPOI3D)?.text?.stroke = color.invert()
+            (node as? MapPOI2D)?.text?.stroke = color.invert()
         }
     }
 
@@ -286,12 +287,17 @@ class MapPane : StackPane() {
         }
     }
 
+    private fun onMouseReleased(mouseEvent: MouseEvent) {
+        setCursorVisible(true)
+    }
+
     private fun onMousePressed(mouseEvent: MouseEvent) {
         mouseAnchorX = mouseEvent.x
         mouseAnchorY = mouseEvent.y
         initialTranslateX = group.translateX
         initialTranslateY = group.translateY
         mouseEvent.consume()
+        setCursorVisible(false)
     }
 
     private fun onDrag(mouseEvent: MouseEvent) {
