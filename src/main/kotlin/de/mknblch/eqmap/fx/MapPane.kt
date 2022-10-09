@@ -5,6 +5,7 @@ import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.zone.*
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
+import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
 import javafx.scene.Group
@@ -35,7 +36,7 @@ import kotlin.math.sign
 class MapPane : StackPane() {
 
     private var cursor = Arrow(0.0, 0.0, 12.0, Color.GOLDENROD)
-    private val cursorText = Text(0.0, 0.0, "").also {
+    private val cursorHint = Text(0.0, 0.0, "").also {
         it.isVisible = false
     }
     private var mouseAnchorX: Double = 0.0
@@ -57,6 +58,10 @@ class MapPane : StackPane() {
     @Autowired
     private lateinit var strokeWidthProperty: DoubleProperty
 
+    @Qualifier("transparency")
+    @Autowired
+    private lateinit var transparency: DoubleProperty
+
     @Qualifier("useZLayerViewDistance")
     @Autowired
     private lateinit var useZLayerViewDistance: BooleanProperty
@@ -69,13 +74,20 @@ class MapPane : StackPane() {
     @Autowired
     private lateinit var showPoiProperty: BooleanProperty
 
+    @Qualifier("falseColor")
+    @Autowired
+    private lateinit var falseColor: ObjectProperty<Color>
+
+    @Qualifier("backgroundColor")
+    @Autowired
+    private lateinit var backgroundColor: ObjectProperty<Color>
 
     fun setMapContent(map: ZoneMap) = synchronized(this) {
         cursor.isVisible = false
         this.map = map
         children.clear()
         children.add(prepare(map))
-        children.add(cursorText)
+        children.add(cursorHint)
         layout()
         redraw()
         resetColor(colorTransformer)
@@ -237,7 +249,7 @@ class MapPane : StackPane() {
                 onScroll(mouseEvent)
                 mouseEvent.consume()
             }
-
+            // move handler
             addEventFilter(MouseEvent.MOUSE_MOVED) { mouseEvent ->
                 onMouseMoved(mouseEvent)
             }
@@ -248,9 +260,8 @@ class MapPane : StackPane() {
 
     private fun onMouseMoved(mouseEvent: MouseEvent) {
         val b = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
-        cursorText.text = "(${b.y.roundToInt()} x ${b.x.roundToInt()})"
-        cursorText.translateX = mouseEvent.x + 15
-        cursorText.translateY = mouseEvent.y + 15
+        cursorHint.text = "( ${-b.y.roundToInt()}x${-b.x.roundToInt()} )"
+        setCursorHintPosition(mouseEvent)
     }
 
     private fun registerNodeProperties() {
@@ -261,9 +272,10 @@ class MapPane : StackPane() {
     }
 
     fun setBackgroundColor(color: Color) {
+        if (!this::map.isInitialized) return
         background = Background.fill(color)
         setCursorColor(color.invert())
-        cursorText.stroke = color.invert()
+        cursorHint.stroke = color.invert()
         map.elements.forEach { node ->
             // increase stroke width when zooming out
             (node as? MapPOI3D)?.text?.stroke = color.invert()
@@ -283,12 +295,12 @@ class MapPane : StackPane() {
     private fun onClick(mouseEvent: MouseEvent) {
         if (mouseEvent.button == MouseButton.SECONDARY) {
             moveCursorClick(Point2D(mouseEvent.x, mouseEvent.y))
-            mouseEvent.consume()
+//            mouseEvent.consume()
         }
     }
 
     private fun onMouseReleased(mouseEvent: MouseEvent) {
-        setCursorVisible(true)
+        setCursorOpaque(true)
     }
 
     private fun onMousePressed(mouseEvent: MouseEvent) {
@@ -296,27 +308,34 @@ class MapPane : StackPane() {
         mouseAnchorY = mouseEvent.y
         initialTranslateX = group.translateX
         initialTranslateY = group.translateY
+        setCursorOpaque(false)
         mouseEvent.consume()
-        setCursorVisible(false)
     }
 
     private fun onDrag(mouseEvent: MouseEvent) {
         if (mouseEvent.button == MouseButton.PRIMARY) {
             group.translateX = initialTranslateX + mouseEvent.x - mouseAnchorX
             group.translateY = initialTranslateY + mouseEvent.y - mouseAnchorY
+            setCursorHintPosition(mouseEvent)
             mouseEvent.consume()
         }
     }
 
+    private fun setCursorHintPosition(mouseEvent: MouseEvent) {
+        cursorHint.translateX = mouseEvent.x + 15
+        cursorHint.translateY = mouseEvent.y + 15
+    }
+
     private fun onScroll(event: ScrollEvent) {
         val wheelDelta: Double = sign(event.deltaY)
-        val mousePoint = Point2D(event.x, event.y)
         val v = wheelDelta * 0.05
 
-        if (event.isControlDown) {
+        if (event.isAltDown) {
+            transparency.value = (transparency.value + v).coerceIn(0.2, 0.95)
+        } else if (event.isControlDown) {
             changeZAxis(wheelDelta)
         } else {
-            zoomAt(mousePoint, v)
+            zoomAt(Point2D(event.x, event.y), v)
             // adapt stroke width when zooming
             strokeWidthProperty.set((1.0 / group.scaleY))
         }
@@ -335,8 +354,10 @@ class MapPane : StackPane() {
             width / group.boundsInLocal.width,
             height / group.boundsInLocal.height
         ) * 0.75
+        val value = max(f, group.scaleY + (group.scaleY * v))
+        logger.debug("zooming into $localBeforeScroll by ${(value * 100).toInt()}%")
         group.scaleX = max(f, group.scaleX + (group.scaleX * v))
-        group.scaleY = max(f, group.scaleY + (group.scaleY * v))
+        group.scaleY = value
         val clickInParent = group.localToParent(localBeforeScroll)
         // center target point at mouse pointer
         translateTo(clickInParent, mousePoint)
@@ -358,18 +379,25 @@ class MapPane : StackPane() {
         showPoiProperty.addListener { _, _, _ ->
             redraw()
         }
+        backgroundColor.addListener { _, _, v ->
+            if (v != null) setBackgroundColor(v)
+        }
+        falseColor.addListener { _, _, v ->
+            if (v != null) deriveColor(v)
+        }
+
     }
 
-    fun shotCursorText(v: Boolean) {
-        cursorText.isVisible = v
+    fun setCursorTextVisible(v: Boolean) {
+        cursorHint.isVisible = v
     }
 
     fun setCursorColor(color: Color) {
-        cursorText.stroke = color
+        cursorHint.stroke = color
     }
 
-    fun setCursorVisible(visible: Boolean) {
-        cursorText.opacity = if (visible) 1.0 else 0.0
+    fun setCursorOpaque(visible: Boolean) {
+        cursorHint.opacity = if (visible) 1.0 else 0.0
     }
 
     companion object {

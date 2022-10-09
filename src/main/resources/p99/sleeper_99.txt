@@ -1,0 +1,7 @@
+K 1899.0, 2794.0, 100, 60, 100, 1, Hraashna_the_Warder
+K -403.0, 863.0, 100, 60, 100, 1, Master_of_the_Guard
+K 1059.0, 1966.0, 100, 60, 100, 1, Nanzata_the_Warder
+K 753.0, 2383.0, 100, 60, 100, 1, The_Final_Arbiter
+K 81.0, 589.0, 100, 60, 100, 1, The_Progenitor
+K 1067.0, 2798.0, 100, 60, 100, 1, Tukaarak_the_Warder
+K 1911.0, 1970.0, 100, 60, 100, 1, Ventani_the_Warder

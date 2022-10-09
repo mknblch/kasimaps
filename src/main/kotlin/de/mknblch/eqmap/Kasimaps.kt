@@ -1,16 +1,21 @@
 package de.mknblch.eqmap
 
+import de.mknblch.eqmap.common.PersistentProperties
+import de.mknblch.eqmap.config.DirectoryWatcherService
 import de.mknblch.eqmap.config.SpringFXMLLoader
 import javafx.application.Platform
 import javafx.scene.Scene
 import javafx.scene.paint.Color
+import javafx.stage.DirectoryChooser
 import javafx.stage.Stage
 import javafx.stage.StageStyle
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ConfigurableApplicationContext
+import java.io.File
 import javax.annotation.PreDestroy
 
 
@@ -23,22 +28,73 @@ class Kasimaps : CommandLineRunner {
     @Autowired
     private lateinit var loader: SpringFXMLLoader
 
+    @Autowired
+    private lateinit var properties: PersistentProperties
+
+    @Autowired
+    private lateinit var directoryWatcherService: DirectoryWatcherService
+
+    private lateinit var stage: Stage
+    private lateinit var scene: Scene
+
     fun start() {
-        val stage = Stage(StageStyle.TRANSPARENT)
+        stage = Stage(StageStyle.TRANSPARENT).also {
+            it.x = properties.getOrSet("x", 300.0)
+            it.y = properties.getOrSet("y", 200.0)
+        }
+
+        properties.getOrEval("eqDirectory") {
+            chooseEqDirectory()
+        }?.also {
+            directoryWatcherService.start(File(it))
+        }
+
         context.beanFactory.registerSingleton("primaryStage", stage)
         val (root, mapController) = loader.load(MapController::class.java)
-        val scene = Scene(root, 800.0, 600.0, Color.TRANSPARENT)
+        scene = Scene(
+            root,
+            properties.getOrSet("width", 800.0),
+            properties.getOrSet("height", 600.0),
+            Color.TRANSPARENT
+        )
         scene.stylesheets.add(javaClass.classLoader.getResource("style.css")!!.toExternalForm())
         scene.fill = Color.TRANSPARENT
         stage.scene = scene
-        stage.initStyle(StageStyle.TRANSPARENT)
         stage.show()
 
+
+        // reset
+        mapController.resetMenuItem.setOnAction {
+            logger.info("reset event parser")
+            chooseEqDirectory()?.also {
+                properties.set("eqDirectory", it)
+                directoryWatcherService.start(File(it))
+            }
+        }
+
+        // TODO replace with something that works
         ResizeHelper.addResizeListener(mapController.lockWindowMenuItem.selectedProperty(), stage)
+
+    }
+
+    private fun chooseEqDirectory(): String? {
+        val fileChooser = DirectoryChooser().also {
+            it.title = "Set EQ root directory"
+        }
+        return fileChooser.showDialog(stage)?.absolutePath ?: kotlin.run {
+            logger.warn("EQ-Directory not set - Interactive mode will not be available!")
+            null
+        }
     }
 
     @PreDestroy
     fun stop() {
+        properties.set("width", scene.width)
+        properties.set("height", scene.height)
+        properties.set("x", stage.x)
+        properties.set("y", stage.y)
+
+        properties.write()
         Platform.exit()
     }
 
@@ -46,6 +102,9 @@ class Kasimaps : CommandLineRunner {
         Platform.startup(this::start);
     }
 
+    companion object {
+        private val logger = LoggerFactory.getLogger(Kasimaps::class.java)
+    }
 }
 
 fun main(args: Array<out String>) {

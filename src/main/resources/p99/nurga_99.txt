@@ -1,6 +1,6 @@
-K 819.0, 2162.0, 80, 30, 80, 2, A_burynai_slave
-K 1018.0, 1934.0, 80, 30, 80, 2, A_burynai_slave
-K 1009.0, 2225.0, 80, 30, 80, 2, A_burynai_slave
-K 996.0, 2154.0, 80, 30, 80, 2, A_burynai_slave
-K 68.0, 1498.0, 80, 30, 80, 2, A_Sleeping_Ogre
-K -245.0, 1380.0, 80, 30, 80, 2, A_Sleeping_Ogre
+K 819.0, 2162.0, 100, 60, 100, 1, A_burynai_slave
+K 1018.0, 1934.0, 100, 60, 100, 1, A_burynai_slave
+K 1009.0, 2225.0, 100, 60, 100, 1, A_burynai_slave
+K 996.0, 2154.0, 100, 60, 100, 1, A_burynai_slave
+K 68.0, 1498.0, 100, 60, 100, 1, A_Sleeping_Ogre
+K -245.0, 1380.0, 100, 60, 100, 1, A_Sleeping_Ogre

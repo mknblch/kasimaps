@@ -14,11 +14,11 @@ data class MapPOI3D(
     override val color: Color,
     val type: Int,
     val name: String,
-    val circle: Circle = Circle(x - POI_SIZE / 2.0, y - POI_SIZE / 2.0, POI_SIZE.toDouble()).also {
+    val circle: Circle = Circle(x, y, POI_SIZE.toDouble()).also {
         it.stroke = color
         it.fill = color
     },
-    val text: Text = Text(x + POI_SIZE + 1, y + POI_SIZE, name),
+    val text: Text = Text(x + POI_SIZE + 3, y + 5, name),
     override val zRange: ClosedRange<Double> = (z..z)
 ) : MapNode, Group(circle, text) {
 

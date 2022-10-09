@@ -1,6 +1,7 @@
 package de.mknblch.eqmap
 
 import de.mknblch.eqmap.common.OriginalTransformer
+import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.common.ZColorTransformer
 import de.mknblch.eqmap.config.DirectoryWatcherService
 import de.mknblch.eqmap.config.FxmlResource
@@ -13,10 +14,12 @@ import de.mknblch.eqmap.fx.MapPane
 import de.mknblch.eqmap.zone.LayerComparator
 import de.mknblch.eqmap.zone.ZoneMap
 import javafx.application.Platform
+import javafx.beans.property.ObjectProperty
+import javafx.beans.property.Property
 import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
-import javafx.geometry.Insets
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.*
@@ -47,6 +50,9 @@ class MapController : Initializable {
     @Autowired
     private lateinit var directoryWatcherService: DirectoryWatcherService
 
+    @Autowired
+    private lateinit var properties: PersistentProperties
+
     @FXML
     private lateinit var parentPane: StackPane
 
@@ -54,7 +60,7 @@ class MapController : Initializable {
     private lateinit var mapPane: MapPane
 
     @FXML
-    private lateinit var resetMenuItem: MenuItem
+    lateinit var resetMenuItem: MenuItem
 
     @FXML
     private lateinit var zoneMenu: Menu
@@ -101,8 +107,92 @@ class MapController : Initializable {
     @Autowired
     private lateinit var showPoiProperty: SimpleBooleanProperty
 
+    @Qualifier("transparency")
+    @Autowired
+    private lateinit var transparency: SimpleDoubleProperty
+
+    @Qualifier("falseColor")
+    @Autowired
+    private lateinit var falseColor: ObjectProperty<Color>
+
+    @Qualifier("backgroundColor")
+    @Autowired
+    private lateinit var backgroundColor: ObjectProperty<Color>
+
     private var xOffset: Double = 0.0
     private var yOffset: Double = 0.0
+
+
+    override fun initialize(p0: URL?, p1: ResourceBundle?) {
+        populateZoneMenu()
+        mapPane.background = Background.EMPTY
+
+        // get ui state
+        centerCheckMenuItem.selectedProperty().set(properties.getOrSet("centerPlayerCursor", true))
+        centerCheckMenuItem.selectedProperty().addListener { _, _, v ->
+            properties.set("centerPlayerCursor", v)
+        }
+        // zlayer
+        zLayerCheckMenuItem.selectedProperty().set(properties.getOrSet("useZLayerViewDistance", false))
+        zLayerCheckMenuItem.selectedProperty().addListener { _, _, v ->
+            properties.set("useZLayerViewDistance", v)
+        }
+
+        showPoi.selectedProperty().set(properties.getOrSet("showPoi", true))
+        showPoi.selectedProperty().addListener { _, _, v ->
+            properties.set("showPoi", v)
+        }
+
+        // register properties
+        centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
+        useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
+        showPoiProperty.bind(showPoi.selectedProperty())
+        //
+        useZLayerViewDistance.addListener { _, _, _ ->
+            mapPane.redraw()
+        }
+        val primaryStage: Stage = context.getBean("primaryStage") as Stage
+        // transparency settings
+        transparentWindow.selectedProperty().set(properties.getOrSet("useTransparency", false))
+        transparentWindow.selectedProperty().addListener { _, _, newValue ->
+            primaryStage.opacity = if (newValue) transparency.get() else 1.0
+            properties.set("useTransparency", newValue)
+        }
+        transparency.addListener { _, _, v ->
+            setStageOpacity(primaryStage, v)
+            properties.set("opacity", v.toDouble())
+        }
+        setStageOpacity(primaryStage, properties.getOrSet("transparency", 0.9))
+        // min max and drag listeners
+        registerMaxMinListener(primaryStage)
+        registerDragListener(primaryStage)
+        // colors
+        falseColor.bind(colorChooser.chosenColorProperty())
+        backgroundColor.bind(blackWhiteChooser.chosenColorProperty())
+        // lock window
+        lockWindowMenuItem.selectedProperty().set(properties.getOrSet("lockWindow", false))
+        lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
+            logger.debug("set alwaysOnTop to $v")
+            primaryStage.isAlwaysOnTop = v
+            properties.set("lockWindow", v)
+        }
+        primaryStage.isAlwaysOnTop = properties.getOrSet("lockWindow", false)
+        // hide while out of focus
+        parentPane.hoverProperty().addListener { _, _, v ->
+            menuBar.opacity = if (v) 1.0 else 0.0
+            mapPane.setCursorOpaque(v)
+        }
+        // cursor visibility
+        showCursorText.selectedProperty().set(properties.getOrSet("showCursorText", true))
+        showCursorText.selectedProperty().addListener { _, _, v ->
+            logger.debug("set alwaysOnTop to $v")
+            mapPane.setCursorTextVisible(v)
+            properties.set("showCursorText", v)
+        }
+        mapPane.setCursorTextVisible(properties.getOrSet("showCursorText", true))
+        // draw
+        mapPane.redraw()
+    }
 
     @EventListener
     fun onZoneEvent(e: ZoneEvent) {
@@ -133,50 +223,16 @@ class MapController : Initializable {
         mapPane.setColorTransformer(OriginalTransformer)
     }
 
-    override fun initialize(p0: URL?, p1: ResourceBundle?) {
-        populateZoneMenu()
-        menuBar.opacity = 1.0
-        mapPane.background = Background.EMPTY
-        // register properties
-        centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
-        useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
-        showPoiProperty.bind(showPoi.selectedProperty())
-        useZLayerViewDistance.addListener { _, _, _ ->
-            mapPane.redraw()
+    private fun setStageOpacity(primaryStage: Stage, v: Number) {
+        if (!transparentWindow.selectedProperty().get()) {
+            return
         }
-        val primaryStage: Stage = context.getBean("primaryStage") as Stage
-        transparentWindow.selectedProperty().addListener { _, _, newValue ->
-            primaryStage.opacity = if (newValue) 0.7 else 1.0
-        }
-        registerMaxMinListener(primaryStage)
-        registerDragListener(primaryStage)
-        colorChooser.chosenColorProperty().addListener { _, _, v ->
-            mapPane.deriveColor(v)
-        }
-        blackWhiteChooser.chosenColorProperty().addListener { _, _, v ->
-            logger.debug("setting background to $v")
-            mapPane.setBackgroundColor(v)
-        }
-        lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
-            primaryStage.isAlwaysOnTop = v
-        }
-        parentPane.hoverProperty().addListener { _, _, v ->
-            menuBar.opacity = if (v) 1.0 else 0.0
-            mapPane.setCursorVisible(v)
-        }
-        resetMenuItem.setOnAction {
-            directoryWatcherService.reset()
-        }
-        showCursorText.selectedProperty().addListener { _, _, v ->
-            mapPane.shotCursorText(v)
-        }
-//        parentPane.border = Border(BorderStroke(Color.TRANSPARENT, BorderStrokeStyle.NONE, CornerRadii.EMPTY, BorderWidths(5.0)))
-        mapPane.redraw()
+        primaryStage.opacity = v.toDouble()
     }
 
     private fun populateZoneMenu() {
         zones.forEach { map ->
-            val element = MenuItem(map.name)
+            val element = MenuItem(map.name.capitalize())
             element.setOnAction {
                 mapPane.setMapContent(map)
                 populateLayerMenu(map)
@@ -188,7 +244,8 @@ class MapController : Initializable {
     private fun populateLayerMenu(map: ZoneMap) {
         poiLayerMenu.items.clear()
         map.layer.sortedWith(LayerComparator).forEach { layer ->
-            val checkMenuItem = CustomCheckMenuItem(layer.name.removeSuffix(".txt")).also {
+            val name = layer.name.removeSuffix(".txt").lowercase().capitalize()
+            val checkMenuItem = CustomCheckMenuItem(name).also {
                 it.checkbox.selectedProperty().set(true)
                 it.checkbox.selectedProperty().addListener { _, _, v ->
                     layer.show = v

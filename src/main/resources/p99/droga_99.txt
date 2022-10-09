@@ -1,7 +1,6 @@
-K -1314.0, 200.0, 80, 30, 80, 2, A_goblin_penmaster
-K -1950.0, 1650.0, 80, 30, 80, 2, A_goblin_stitcher
-K 115.0, 6.0, 80, 30, 80, 2, A_goblin_traitor
-K 185.0, 129.0, 80, 30, 80, 2, A_Goblin_Warder
-K -1929.0, -114.0, 80, 30, 80, 2, An_angry_goblin
-K -1967.0, -726.0, 80, 30, 80, 2, Soothsayer_Dregzak
-K -1950.0, -150.0, 80, 30, 80, 2, Warlord_Skargus
+K -1314.0, 200.0, 100, 60, 100, 1, A_goblin_penmaster
+K -1950.0, 1650.0, 100, 60, 100, 2, A_goblin_stitcher|Warlord_Skargus
+K 115.0, 6.0, 100, 60, 100, 1, A_goblin_traitor
+K 185.0, 129.0, 100, 60, 100, 1, A_Goblin_Warder
+K -1929.0, -114.0, 100, 60, 100, 1, An_angry_goblin
+K -1967.0, -726.0, 100, 60, 100, 1, Soothsayer_Dregzak

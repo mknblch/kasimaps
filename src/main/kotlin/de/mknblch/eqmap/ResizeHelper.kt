@@ -37,11 +37,11 @@ object ResizeHelper {
         resizeListener.maxHeight = Double.MAX_VALUE
 
         stage.scene.root.childrenUnmodifiable.forEach {
-            addListenerDeeply(it, resizeListener, 0)
+            addListenerDeeply(it, resizeListener, 1)
         }
     }
 
-    private fun addListenerDeeply(node: Node, listener: EventHandler<MouseEvent>, depth: Int) {
+    private fun addListenerDeeply(node: Node, listener: EventHandler<MouseEvent>, depth: Int = Int.MAX_VALUE) {
 
         doTraverse(depth, node) {
             node.addEventHandler(MouseEvent.MOUSE_PRESSED, listener)
