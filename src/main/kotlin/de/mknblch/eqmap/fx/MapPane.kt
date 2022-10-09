@@ -35,7 +35,7 @@ import kotlin.math.sign
 @Component
 class MapPane : StackPane() {
 
-    private var cursor = Arrow(0.0, 0.0, 12.0, Color.GOLDENROD)
+    private var cursor = Arrow(0.0, 0.0, 12.0, Color.DARKBLUE)
     private val cursorHint = Text(0.0, 0.0, "").also {
         it.isVisible = false
     }

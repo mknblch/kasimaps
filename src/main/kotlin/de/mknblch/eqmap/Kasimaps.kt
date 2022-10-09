@@ -38,11 +38,14 @@ class Kasimaps : CommandLineRunner {
     private lateinit var scene: Scene
 
     fun start() {
-        stage = Stage(StageStyle.TRANSPARENT).also {
-            it.x = properties.getOrSet("x", 300.0)
-            it.y = properties.getOrSet("y", 200.0)
+        stage = Stage(StageStyle.TRANSPARENT).also { s ->
+            properties.get<Double>("x")?.also {
+                s.x = it
+            }
+            properties.get<Double>("y")?.also {
+                s.y = it
+            }
         }
-
         properties.getOrEval("eqDirectory") {
             chooseEqDirectory()
         }?.also {
