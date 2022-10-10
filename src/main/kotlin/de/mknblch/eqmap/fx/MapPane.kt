@@ -3,6 +3,7 @@ package de.mknblch.eqmap.fx
 import de.mknblch.eqmap.common.ColorTransformer
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.zone.*
+import javafx.animation.FadeTransition
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ObjectProperty
@@ -18,8 +19,10 @@ import javafx.scene.layout.Border
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
+import javafx.scene.shape.Circle
 import javafx.scene.shape.Line
 import javafx.scene.text.Text
+import javafx.util.Duration
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -30,6 +33,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sign
+
 
 @Lazy
 @Component
@@ -88,6 +92,7 @@ class MapPane : StackPane() {
         children.clear()
         children.add(prepare(map))
         children.add(cursorHint)
+//        children.add(ping)
         layout()
         redraw()
         resetColor(colorTransformer)
@@ -141,19 +146,19 @@ class MapPane : StackPane() {
         resetColor(colorTransformer)
         map.elements.forEach { node ->
             when (node) {
-                is MapLine -> node.stroke = node.color.deriveColor(
+                is MapLine -> node.stroke = (node.stroke as Color).deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
                     newColor.opacity
                 )
-                is MapPOI3D -> node.text.fill = node.color.deriveColor(
+                is MapPOI3D -> node.text.fill = (node.text.fill as Color).deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
                     newColor.opacity
                 )
-                is MapPOI2D -> node.text.fill = node.color.deriveColor(
+                is MapPOI2D -> node.text.fill = (node.text.fill as Color).deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
@@ -220,7 +225,7 @@ class MapPane : StackPane() {
         // unload
         unloadCurrent()
         // group map & cursor
-        group = Group(*map.toTypedArray(), cursor)
+        group = Group(*map.toTypedArray(), cursor, ping)
 
         // register properties on elements
         registerNodeProperties()
@@ -260,7 +265,7 @@ class MapPane : StackPane() {
 
     private fun onMouseMoved(mouseEvent: MouseEvent) {
         val b = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
-        cursorHint.text = "( ${-b.y.roundToInt()}x${-b.x.roundToInt()} )"
+        cursorHint.text = "( ${-b.y.roundToInt()} x ${-b.x.roundToInt()} )"
         setCursorHintPosition(mouseEvent)
     }
 
@@ -292,11 +297,33 @@ class MapPane : StackPane() {
         }
     }
 
+    private val ping = Circle(8.0).also {
+        it.stroke = Color.RED
+        it.fill = Color.TRANSPARENT
+        it.isVisible = false
+        it.isMouseTransparent = true
+    }
+
+    val pt = PingTransition(30, ping)
+
     private fun onClick(mouseEvent: MouseEvent) {
         if (mouseEvent.button == MouseButton.SECONDARY) {
-            moveCursorClick(Point2D(mouseEvent.x, mouseEvent.y))
-//            mouseEvent.consume()
+            ping(mouseEvent)
         }
+    }
+
+    fun ping(mouseEvent: MouseEvent, centerAtPing: Boolean = false) {
+        val point2D = Point2D(mouseEvent.x, mouseEvent.y)
+        val local = group.parentToLocal(point2D)
+        ping.isVisible = true
+        ping.strokeWidth = (1.0 + 1.0 / group.scaleX)
+        ping.radius = (1.0 + 1.0 / group.scaleX) * 10
+        println(group.scaleX)
+        ping.centerX = local.x
+        ping.centerY = local.y
+        if (centerAtPing) centerPoint(group.localToParent(local))
+        pt.playFromStart()
+//        ft.playFromStart()
     }
 
     private fun onMouseReleased(mouseEvent: MouseEvent) {
@@ -356,7 +383,7 @@ class MapPane : StackPane() {
         ) * 0.75
         val value = max(f, group.scaleY + (group.scaleY * v))
         logger.debug("zooming into $localBeforeScroll by ${(value * 100).toInt()}%")
-        group.scaleX = max(f, group.scaleX + (group.scaleX * v))
+        group.scaleX = value
         group.scaleY = value
         val clickInParent = group.localToParent(localBeforeScroll)
         // center target point at mouse pointer
@@ -368,7 +395,7 @@ class MapPane : StackPane() {
         val f = min(
             width / group.boundsInLocal.width,
             height / group.boundsInLocal.height
-        ) * 0.95
+        ) * 0.90
         group.scaleX = f
         group.scaleY = f
         strokeWidthProperty.set((1.0 / group.scaleY))

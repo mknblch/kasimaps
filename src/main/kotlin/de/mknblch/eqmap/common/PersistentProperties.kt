@@ -2,6 +2,8 @@ package de.mknblch.eqmap.common
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import java.io.File
 import java.nio.file.Paths
@@ -19,7 +21,7 @@ class PersistentProperties(val file: File) {
     }
 
     inline fun <reified V : Any> getOrSet(key: String, default: V): V {
-        return if (data[key] is V) data[key] as V else kotlin.run {
+        return if (data.containsKey(key) && data[key] is V) data[key] as V else kotlin.run {
             data[key] = default
             default
         }
@@ -51,9 +53,12 @@ class PersistentProperties(val file: File) {
 
         private val typeRef = object : TypeReference<MutableMap<String, Any>>() {}
 
+        private val ptv: PolymorphicTypeValidator =
+            BasicPolymorphicTypeValidator.builder().allowIfBaseType(Any::class.java).build()
         private val mapper = ObjectMapper()
             .registerKotlinModule().also {
                 it.writerWithDefaultPrettyPrinter()
+                it.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT)
             }
 
         fun load(path: String): PersistentProperties {

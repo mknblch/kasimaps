@@ -48,16 +48,13 @@ class MapController : Initializable {
     private lateinit var context: ConfigurableApplicationContext
 
     @Autowired
-    private lateinit var directoryWatcherService: DirectoryWatcherService
-
-    @Autowired
     private lateinit var properties: PersistentProperties
 
     @FXML
     private lateinit var parentPane: StackPane
 
     @FXML
-    private lateinit var mapPane: MapPane
+    lateinit var mapPane: MapPane
 
     @FXML
     lateinit var resetMenuItem: MenuItem
@@ -162,13 +159,23 @@ class MapController : Initializable {
             setStageOpacity(primaryStage, v)
             properties.set("opacity", v.toDouble())
         }
-        setStageOpacity(primaryStage, properties.getOrSet("transparency", 0.9))
         // min max and drag listeners
         registerMaxMinListener(primaryStage)
         registerDragListener(primaryStage)
         // colors
         falseColor.bind(colorChooser.chosenColorProperty())
+        falseColor.addListener { _, _, v ->
+            logger.debug("setting false color $v")
+            properties.set("falseColor", v.toString())
+        }
+        // background
         backgroundColor.bind(blackWhiteChooser.chosenColorProperty())
+        backgroundColor.addListener { _, _, v ->
+            logger.debug("setting background color $v")
+            properties.set("backgroundColor", v.toString())
+        }
+
+
         // lock window
         lockWindowMenuItem.selectedProperty().set(properties.getOrSet("lockWindow", false))
         lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
@@ -176,7 +183,6 @@ class MapController : Initializable {
             primaryStage.isAlwaysOnTop = v
             properties.set("lockWindow", v)
         }
-        primaryStage.isAlwaysOnTop = properties.getOrSet("lockWindow", false)
         // hide while out of focus
         parentPane.hoverProperty().addListener { _, _, v ->
             menuBar.opacity = if (v) 1.0 else 0.0
@@ -189,9 +195,10 @@ class MapController : Initializable {
             mapPane.setCursorTextVisible(v)
             properties.set("showCursorText", v)
         }
-        mapPane.setCursorTextVisible(properties.getOrSet("showCursorText", true))
         // draw
         mapPane.redraw()
+
+
     }
 
     @EventListener
@@ -223,7 +230,7 @@ class MapController : Initializable {
         mapPane.setColorTransformer(OriginalTransformer)
     }
 
-    private fun setStageOpacity(primaryStage: Stage, v: Number) {
+    fun setStageOpacity(primaryStage: Stage, v: Number) {
         if (!transparentWindow.selectedProperty().get()) {
             return
         }
@@ -291,7 +298,6 @@ class MapController : Initializable {
 
     @PreDestroy
     fun destroy() {
-        Platform.exit()
     }
 
     @FXML

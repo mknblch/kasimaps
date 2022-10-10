@@ -3,6 +3,7 @@ package de.mknblch.eqmap
 import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.config.DirectoryWatcherService
 import de.mknblch.eqmap.config.SpringFXMLLoader
+import de.mknblch.eqmap.zone.ZoneMap
 import javafx.application.Platform
 import javafx.scene.Scene
 import javafx.scene.paint.Color
@@ -26,6 +27,9 @@ class Kasimaps : CommandLineRunner {
     private lateinit var context: ConfigurableApplicationContext
 
     @Autowired
+    private lateinit var zones: List<ZoneMap>
+
+    @Autowired
     private lateinit var loader: SpringFXMLLoader
 
     @Autowired
@@ -46,11 +50,7 @@ class Kasimaps : CommandLineRunner {
                 s.y = it
             }
         }
-        properties.getOrEval("eqDirectory") {
-            chooseEqDirectory()
-        }?.also {
-            directoryWatcherService.start(File(it))
-        }
+
 
         context.beanFactory.registerSingleton("primaryStage", stage)
         val (root, mapController) = loader.load(MapController::class.java)
@@ -65,6 +65,11 @@ class Kasimaps : CommandLineRunner {
         stage.scene = scene
         stage.show()
 
+        properties.getOrEval("eqDirectory") {
+            chooseEqDirectory()
+        }?.also {
+            directoryWatcherService.start(File(it))
+        }
 
         // reset
         mapController.resetMenuItem.setOnAction {
@@ -78,6 +83,13 @@ class Kasimaps : CommandLineRunner {
         // TODO replace with something that works
         ResizeHelper.addResizeListener(mapController.lockWindowMenuItem.selectedProperty(), stage)
 
+        // RODO refactor
+        mapController.mapPane.setMapContent(zones[0])
+        stage.isAlwaysOnTop = properties.getOrSet("lockWindow", false)
+        mapController.setStageOpacity(stage, properties.getOrSet("transparency", 0.9))
+        mapController.mapPane.setCursorTextVisible(properties.getOrSet("showCursorText", true))
+        mapController.mapPane.setBackgroundColor(Color.web(properties.getOrSet("backgroundColor", "#BABABA")))
+        mapController.mapPane.deriveColor(Color.web(properties.getOrSet("falseColor", "goldenrod")))
     }
 
     private fun chooseEqDirectory(): String? {
