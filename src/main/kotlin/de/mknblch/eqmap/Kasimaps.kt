@@ -1,6 +1,8 @@
 package de.mknblch.eqmap
 
+import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.PersistentProperties
+import de.mknblch.eqmap.common.ZColorTransformer
 import de.mknblch.eqmap.config.DirectoryWatcherService
 import de.mknblch.eqmap.config.SpringFXMLLoader
 import de.mknblch.eqmap.zone.ZoneMap
@@ -17,11 +19,14 @@ import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ConfigurableApplicationContext
 import java.io.File
+import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
 
 @SpringBootApplication
 class Kasimaps : CommandLineRunner {
+
+    private lateinit var mapController: MapController
 
     @Autowired
     private lateinit var context: ConfigurableApplicationContext
@@ -41,6 +46,10 @@ class Kasimaps : CommandLineRunner {
     private lateinit var stage: Stage
     private lateinit var scene: Scene
 
+    @PostConstruct
+    fun init() {
+    }
+
     fun start() {
         stage = Stage(StageStyle.TRANSPARENT).also { s ->
             properties.get<Double>("x")?.also {
@@ -54,6 +63,9 @@ class Kasimaps : CommandLineRunner {
 
         context.beanFactory.registerSingleton("primaryStage", stage)
         val (root, mapController) = loader.load(MapController::class.java)
+
+        this.mapController = mapController
+
         scene = Scene(
             root,
             properties.getOrSet("width", 800.0),
@@ -84,12 +96,21 @@ class Kasimaps : CommandLineRunner {
         ResizeHelper.addResizeListener(mapController.lockWindowMenuItem.selectedProperty(), stage)
 
         // RODO refactor
-        mapController.mapPane.setMapContent(zones[0])
-        stage.isAlwaysOnTop = properties.getOrSet("lockWindow", false)
-        mapController.setStageOpacity(stage, properties.getOrSet("transparency", 0.9))
-        mapController.mapPane.setCursorTextVisible(properties.getOrSet("showCursorText", true))
-        mapController.mapPane.setBackgroundColor(Color.web(properties.getOrSet("backgroundColor", "#BABABA")))
-        mapController.mapPane.deriveColor(Color.web(properties.getOrSet("falseColor", "goldenrod")))
+        Platform.runLater {
+
+            mapController.mapPane.setMapContent(zones[0])
+            stage.isAlwaysOnTop = properties.getOrSet("lockWindow", false)
+            mapController.setStageOpacity(stage, properties.getOrSet("transparency", 0.9))
+            mapController.mapPane.setCursorTextVisible(properties.getOrSet("showCursorText", true))
+            mapController.mapPane.setBackgroundColor(Color.web(properties.getOrSet("backgroundColor", "#BABABA")))
+            val colorTransformer = when (properties.getOrSet("colorTransformer", "original")) {
+                "z" -> ZColorTransformer(30)
+                else -> OriginalTransformer
+            }
+            mapController.mapPane.setColorTransformer(colorTransformer)
+            mapController.mapPane.deriveColor(Color.web(properties.getOrSet("falseColor", "goldenrod")))
+
+        }
     }
 
     private fun chooseEqDirectory(): String? {

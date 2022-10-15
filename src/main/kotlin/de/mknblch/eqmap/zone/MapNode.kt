@@ -14,6 +14,14 @@ interface MapNode {
 
     fun setShow(show: Boolean)
 
+    fun setViewColor(color: Color)
+
+    fun getViewColor(): Color?
+
+    fun resetColor() {
+        setViewColor(color)
+    }
+
     companion object {
 
         fun fromString(l: String): MapNode? {

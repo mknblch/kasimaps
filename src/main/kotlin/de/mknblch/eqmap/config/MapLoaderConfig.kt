@@ -1,10 +1,8 @@
 package de.mknblch.eqmap.config
 
 import de.mknblch.eqmap.zone.MapLayer
-import de.mknblch.eqmap.zone.MapLine
 import de.mknblch.eqmap.zone.MapNode
 import de.mknblch.eqmap.zone.ZoneMap
-import javafx.scene.Node
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,8 +13,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
 import org.springframework.core.io.Resource
 import java.io.InputStreamReader
-import kotlin.math.max
-import kotlin.math.min
 
 
 @Configuration
@@ -41,7 +37,7 @@ class MapLoaderConfig {
                 val layer: List<MapLayer> = entry.value.mapNotNull(::loadLayer)
                 val elements: List<MapNode> = layer.flatMap { it.nodes }
                 val zoneName = fileMapping.getOrDefault(entry.key!!, entry.key!!)
-                ZoneMap(zoneName, elements, layer)
+                ZoneMap(zoneName, entry.key!!, elements, layer)
             }
         }
         return runBlocking {

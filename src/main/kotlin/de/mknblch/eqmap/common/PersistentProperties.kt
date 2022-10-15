@@ -21,14 +21,14 @@ class PersistentProperties(val file: File) {
     }
 
     inline fun <reified V : Any> getOrSet(key: String, default: V): V {
-        return if (data.containsKey(key) && data[key] is V) data[key] as V else kotlin.run {
+        return if (data.containsKey(key)) data[key] as V else kotlin.run {
             data[key] = default
             default
         }
     }
 
     inline fun <reified V : Any> getOrEval(key: String, lambda: () -> V?): V? {
-        return if (data.containsKey(key) && data[key] is V) data[key] as V else kotlin.run {
+        return if (data.containsKey(key)) data[key] as V else kotlin.run {
             lambda()?.also {
                 data[key] = it
             }

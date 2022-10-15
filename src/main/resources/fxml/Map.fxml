@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import de.mknblch.eqmap.fx.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -18,9 +19,10 @@
                 </items>
             </Menu>
             <Menu fx:id="zoneMenu" mnemonicParsing="false" styleClass="custom-context-menu" text="Zone" />
-            <Menu mnemonicParsing="false" text="Layer">
+            <Menu mnemonicParsing="false" text="POI">
                 <items>
                     <CustomCheckMenuItem fx:id="showPoi" mnemonicParsing="false" selected="true" text="Show POI" />
+                    <CustomCheckMenuItem fx:id="enableWaypoint" mnemonicParsing="false" selected="true" text="Enable Waypoints" />
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <Menu fx:id="poiLayerMenu" mnemonicParsing="false" text="Layer" />
                 </items>
@@ -29,7 +31,8 @@
                 <items>
                     <CustomCheckMenuItem fx:id="showCursorText" mnemonicParsing="false" selected="false" text="Cursor Position" />
                     <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
-                    <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" hideOnClick="false" mnemonicParsing="false" text="Filter Z-Axis" />
+                    <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" mnemonicParsing="false" text="Filter Z-Axis" />
+                    <CustomCheckMenuItem fx:id="pingOnMoveCheckMenuItem" mnemonicParsing="false" text="Ping on move" />
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <Menu mnemonicParsing="false" text="Background">
                         <items>
@@ -42,12 +45,12 @@
                     </Menu>
                     <Menu mnemonicParsing="false" text="Color">
                         <items>
-                            <RadioMenuItem mnemonicParsing="false" onAction="#setOriginalTransformer" selected="true" text="Original">
+                            <RadioMenuItem fx:id="originalRadio" mnemonicParsing="false" onAction="#setOriginalTransformer" selected="true" text="Original">
                                 <toggleGroup>
                                     <ToggleGroup fx:id="colorGroup" />
                                 </toggleGroup>
                             </RadioMenuItem>
-                            <RadioMenuItem mnemonicParsing="false" onAction="#setZColorTransformer" text="ZColor" toggleGroup="$colorGroup" />
+                            <RadioMenuItem fx:id="zRadio" mnemonicParsing="false" onAction="#setZColorTransformer" text="ZColor" toggleGroup="$colorGroup" />
                             <CustomMenuItem hideOnClick="false" mnemonicParsing="false">
                                 <content>
                                     <de.mknblch.eqmap.fx.ColorChooser fx:id="colorChooser" />
@@ -59,8 +62,8 @@
             </Menu>
         </menus>
     </MenuBar>
-    <MapPane fx:id="mapPane" alignment="TOP_LEFT" minHeight="10.0" minWidth="10.0" pickOnBounds="false" viewOrder="1.0"
-             StackPane.alignment="CENTER" VBox.vgrow="ALWAYS">
-
-    </MapPane>
+    <MapPane fx:id="mapPane" alignment="TOP_LEFT" centerShape="false" minHeight="50.0" minWidth="50.0" scaleShape="false" viewOrder="1.0" StackPane.alignment="CENTER" VBox.vgrow="ALWAYS">
+      <opaqueInsets>
+         <Insets />
+      </opaqueInsets></MapPane>
 </StackPane>

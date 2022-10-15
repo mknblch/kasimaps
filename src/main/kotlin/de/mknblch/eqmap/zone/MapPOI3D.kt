@@ -13,14 +13,14 @@ data class MapPOI3D(
     val z: Double,
     override val color: Color,
     val type: Int,
-    val name: String,
+    override val name: String,
     val circle: Circle = Circle(x, y, POI_SIZE.toDouble()).also {
         it.stroke = color
         it.fill = color
     },
     val text: Text = Text(x + POI_SIZE + 3, y + 5, name),
     override val zRange: ClosedRange<Double> = (z..z)
-) : MapNode, Group(circle, text) {
+) : MapNode, POI, Group(circle, text) {
 
     override fun setShow(show: Boolean) {
         if (show) {
@@ -34,6 +34,16 @@ data class MapPOI3D(
 
     init {
         styleClass.add("mapPOI")
+    }
+
+    override fun getViewColor(): Color? {
+        return text.fill as? Color
+    }
+
+    override fun setViewColor(color: Color) {
+        text.fill = color
+        circle.stroke = color.invert()
+        circle.fill = color.invert()
     }
 
     companion object {

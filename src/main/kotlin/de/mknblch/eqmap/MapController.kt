@@ -3,10 +3,7 @@ package de.mknblch.eqmap
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.common.ZColorTransformer
-import de.mknblch.eqmap.config.DirectoryWatcherService
-import de.mknblch.eqmap.config.FxmlResource
-import de.mknblch.eqmap.config.LocationEvent
-import de.mknblch.eqmap.config.ZoneEvent
+import de.mknblch.eqmap.config.*
 import de.mknblch.eqmap.fx.BlackWhiteChooser
 import de.mknblch.eqmap.fx.ColorChooser
 import de.mknblch.eqmap.fx.CustomCheckMenuItem
@@ -14,10 +11,7 @@ import de.mknblch.eqmap.fx.MapPane
 import de.mknblch.eqmap.zone.LayerComparator
 import de.mknblch.eqmap.zone.ZoneMap
 import javafx.application.Platform
-import javafx.beans.property.ObjectProperty
-import javafx.beans.property.Property
-import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.property.SimpleDoubleProperty
+import javafx.beans.property.*
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
@@ -92,6 +86,18 @@ class MapController : Initializable {
     @FXML
     private lateinit var transparentWindow: CustomCheckMenuItem
 
+    @FXML
+    private lateinit var pingOnMoveCheckMenuItem: CustomCheckMenuItem
+
+    @FXML
+    private lateinit var enableWaypoint: CustomCheckMenuItem
+
+    @FXML
+    private lateinit var zRadio: RadioMenuItem
+
+    @FXML
+    private lateinit var originalRadio: RadioMenuItem
+
     @Qualifier("useZLayerViewDistance")
     @Autowired
     private lateinit var useZLayerViewDistance: SimpleBooleanProperty
@@ -115,6 +121,10 @@ class MapController : Initializable {
     @Qualifier("backgroundColor")
     @Autowired
     private lateinit var backgroundColor: ObjectProperty<Color>
+
+    @Qualifier("pingOnMove")
+    @Autowired
+    private lateinit var pingOnMove: BooleanProperty
 
     private var xOffset: Double = 0.0
     private var yOffset: Double = 0.0
@@ -140,6 +150,11 @@ class MapController : Initializable {
             properties.set("showPoi", v)
         }
 
+        pingOnMoveCheckMenuItem.selectedProperty().set(properties.getOrSet("pingOnMove", true))
+        pingOnMove.bind(pingOnMoveCheckMenuItem.selectedProperty())
+        pingOnMove.addListener { _, _,v ->
+            properties.set("pingOnMove", v)
+        }
         // register properties
         centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
         useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
@@ -157,24 +172,25 @@ class MapController : Initializable {
         }
         transparency.addListener { _, _, v ->
             setStageOpacity(primaryStage, v)
-            properties.set("opacity", v.toDouble())
+            properties.set("transparency", v.toDouble())
         }
+
         // min max and drag listeners
         registerMaxMinListener(primaryStage)
         registerDragListener(primaryStage)
         // colors
-        falseColor.bind(colorChooser.chosenColorProperty())
+        colorChooser.chosenColor.set(Color.web(properties.getOrSet("falseColor", Color.WHITE.toString())))
+        falseColor.bind(colorChooser.chosenColor)
         falseColor.addListener { _, _, v ->
             logger.debug("setting false color $v")
             properties.set("falseColor", v.toString())
         }
         // background
-        backgroundColor.bind(blackWhiteChooser.chosenColorProperty())
+        backgroundColor.bind(blackWhiteChooser.chosenColor)
         backgroundColor.addListener { _, _, v ->
             logger.debug("setting background color $v")
             properties.set("backgroundColor", v.toString())
         }
-
 
         // lock window
         lockWindowMenuItem.selectedProperty().set(properties.getOrSet("lockWindow", false))
@@ -195,10 +211,47 @@ class MapController : Initializable {
             mapPane.setCursorTextVisible(v)
             properties.set("showCursorText", v)
         }
+        enableWaypoint.selectedProperty().set(properties.getOrSet("enableWaypoint", true))
+        enableWaypoint.selectedProperty().addListener { _, _, v ->
+            mapPane.resetWaypoint()
+            properties.set("enableWaypoint", v)
+        }
+
+
+        when (properties.getOrSet("colorTransformer", "original")) {
+            "z" -> zRadio.selectedProperty().set(true)
+            else -> originalRadio.selectedProperty().set(true)
+        }
         // draw
         mapPane.redraw()
 
+    }
 
+    private val pingRegex = Regex("![Pp][Ii][Nn][Gg] ([a-zA-Z]+) *, *([-.\\d]+) *, *([-.\\d]+)")
+
+    @EventListener
+    fun onMessageEvent(messageEvent: MessageEvent) {
+        if(!enableWaypoint.selectedProperty().get()) return
+        pingRegex.matchEntire(messageEvent.text.trim())?.run {
+            pingEvent(
+                messageEvent.type,
+                messageEvent.from,
+                messageEvent.to,
+                groupValues[1],
+                groupValues[2],
+                groupValues[3]
+            )
+        }
+
+    }
+
+    private fun pingEvent(type: Type, from: String, to: String, zoneName: String, y: String, x: String) {
+        if (from == to || from == "You") return // ignore yourself
+        if (mapPane.getMapShortName() != zoneName) return // only if current zone
+        val ix = -(x.toDoubleOrNull() ?: return) // coordinates
+        val iy = -(y.toDoubleOrNull() ?: return)
+        logger.debug("ping in $type, from $from at ($zoneName, $iy, $ix)")
+        mapPane.userPing(ix, iy, from)
     }
 
     @EventListener
@@ -222,11 +275,13 @@ class MapController : Initializable {
 
     @FXML
     fun setZColorTransformer() {
-        mapPane.setColorTransformer(Companion.zColorTransformer)
+        properties.set("colorTransformer", "z")
+        mapPane.setColorTransformer(zColorTransformer)
     }
 
     @FXML
     fun setOriginalTransformer() {
+        properties.set("colorTransformer", "original")
         mapPane.setColorTransformer(OriginalTransformer)
     }
 

@@ -6,6 +6,7 @@ import kotlin.math.min
 
 data class ZoneMap(
     val name: String,
+    val shortName: String,
     val elements: List<MapNode>,
     val layer: List<MapLayer>
 ) {
@@ -32,6 +33,10 @@ data class ZoneMap(
 
     val maxZ: Double by lazy {
         elements.filterIsInstance<MapLine>().maxOf { max(it.z1, it.z2) }
+    }
+
+    fun pointInBounds(x: Double, y: Double): Boolean {
+        return x in minX..maxX && y in minY..maxY
     }
 
     fun toTypedArray() = elements.map { it as Node }.toTypedArray()

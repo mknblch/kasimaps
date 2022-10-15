@@ -1,10 +1,9 @@
 package de.mknblch.eqmap.common
 
-import de.mknblch.eqmap.common.ColorTransformer.Companion.colorizeNode
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generatePalette
 import de.mknblch.eqmap.zone.MapLine
 import de.mknblch.eqmap.zone.MapNode
-import de.mknblch.eqmap.zone.MapPOI3D
+import de.mknblch.eqmap.zone.POI
 import javafx.scene.paint.Color
 import kotlin.math.min
 
@@ -32,17 +31,10 @@ interface ColorTransformer {
             size: Int = 6,
         ): List<Color> {
 
-            val d = 1.0 / size
+            val d = 1.0 / (size - 1)
             return (0 until size).map {
-                val v = d * it
+                val v = (d * it).coerceAtMost(1.0)
                 Color.color(v, v, v)
-            }
-        }
-
-        fun colorizeNode(mapObject: MapNode, color: Color) {
-            when (mapObject) {
-                is MapLine -> mapObject.stroke = color
-                is MapPOI3D -> mapObject.text.fill = color
             }
         }
     }
@@ -51,7 +43,7 @@ interface ColorTransformer {
 object OriginalTransformer : ColorTransformer {
     override fun apply(objects: Collection<MapNode>) {
         objects.forEach {
-            colorizeNode(it, it.color)
+            it.resetColor()
         }
     }
 }
@@ -61,14 +53,34 @@ class ZColorTransformer(paletteSize: Int = 36) : ColorTransformer {
     private val palette = generatePalette(paletteSize)
 
     override fun apply(objects: Collection<MapNode>) {
-        val minZ: Double = objects.filterIsInstance<MapLine>().minOf { min(it.zRange.start, it.zRange.endInclusive) }
-        val maxZ: Double = objects.filterIsInstance<MapLine>().maxOf { min(it.zRange.start, it.zRange.endInclusive) }
+        if (objects.isEmpty()) {
+            return
+        }
+        val minZ: Double =
+            objects.filterIsInstance<MapLine>().minOfOrNull { min(it.zRange.start, it.zRange.endInclusive) } ?: return
+        val maxZ: Double =
+            objects.filterIsInstance<MapLine>().maxOfOrNull { min(it.zRange.start, it.zRange.endInclusive) } ?: return
         objects.forEach {
             val v = (palette.size - 1) * (min(it.zRange.start, it.zRange.endInclusive) - minZ) / (maxZ - minZ)
             val color = palette[v.toInt().coerceIn(0, palette.size - 1)]
-            colorizeNode(it, color)
+            it.setViewColor(color)
         }
     }
 
 }
 
+class POIDeriveColorTransformer(val color: Color) : ColorTransformer {
+
+    override fun apply(objects: Collection<MapNode>) {
+        objects.forEach { node ->
+            if (node is POI) {
+                node.getViewColor()?.also {
+                    node.setViewColor(
+                        it.deriveColor(color.hue, color.saturation, color.brightness, color.opacity)
+                    )
+                }
+            }
+        }
+    }
+
+}

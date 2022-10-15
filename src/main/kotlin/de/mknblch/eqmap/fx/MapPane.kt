@@ -2,27 +2,24 @@ package de.mknblch.eqmap.fx
 
 import de.mknblch.eqmap.common.ColorTransformer
 import de.mknblch.eqmap.common.OriginalTransformer
+import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.zone.*
-import javafx.animation.FadeTransition
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleDoubleProperty
+import javafx.event.EventTarget
 import javafx.geometry.Point2D
 import javafx.scene.Group
 import javafx.scene.Node
-import javafx.scene.input.MouseButton
-import javafx.scene.input.MouseEvent
-import javafx.scene.input.ScrollEvent
+import javafx.scene.input.*
 import javafx.scene.layout.Background
 import javafx.scene.layout.Border
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
-import javafx.scene.shape.Circle
 import javafx.scene.shape.Line
 import javafx.scene.text.Text
-import javafx.util.Duration
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -39,20 +36,26 @@ import kotlin.math.sign
 @Component
 class MapPane : StackPane() {
 
-    private var cursor = Arrow(0.0, 0.0, 12.0, Color.DARKBLUE)
-    private val cursorHint = Text(0.0, 0.0, "").also {
-        it.isVisible = false
-    }
-    private var mouseAnchorX: Double = 0.0
-    private var mouseAnchorY: Double = 0.0
-    private var initialTranslateX: Double = 0.0
-    private var initialTranslateY: Double = 0.0
     private lateinit var map: ZoneMap
     private lateinit var group: Group
     private lateinit var enclosure: Pane
 
+    private var mouseAnchorX: Double = 0.0
+    private var mouseAnchorY: Double = 0.0
+    private var initialTranslateX: Double = 0.0
+    private var initialTranslateY: Double = 0.0
+
     private val zOrdinate: DoubleProperty = SimpleDoubleProperty(0.0)
+
+    private val locationPing = PingMarker(100, Color.web("#00CCFF"))
+    private val copyPing = PingMarker(100, Color.SPRINGGREEN)
+    private val waypoint = WaypointMarker()
     private var colorTransformer: ColorTransformer = OriginalTransformer
+    private var cursor = Arrow(0.0, 0.0, 13.0, Color.web("#00CCFF"))
+    private val cursorHint = Text(0.0, 0.0, "").also {
+        it.isVisible = false
+    }
+    private val clipboard = Clipboard.getSystemClipboard()
 
     @Qualifier("zViewDistance")
     @Autowired
@@ -78,6 +81,10 @@ class MapPane : StackPane() {
     @Autowired
     private lateinit var showPoiProperty: BooleanProperty
 
+    @Qualifier("pingOnMove")
+    @Autowired
+    private lateinit var pingOnMove: BooleanProperty
+
     @Qualifier("falseColor")
     @Autowired
     private lateinit var falseColor: ObjectProperty<Color>
@@ -86,23 +93,49 @@ class MapPane : StackPane() {
     @Autowired
     private lateinit var backgroundColor: ObjectProperty<Color>
 
+    @PostConstruct
+    fun init() {
+        setBackgroundColor(backgroundColor.get())
+        cursor.sizeProperty.bind(strokeWidthProperty)
+
+        waypoint.scaleProperty.bind(strokeWidthProperty)
+
+        showPoiProperty.addListener { _, _, _ ->
+            redraw()
+        }
+        backgroundColor.addListener { _, _, v ->
+            if (v != null) setBackgroundColor(v)
+        }
+        falseColor.addListener { _, _, v ->
+            if (v != null) deriveColor(v)
+        }
+    }
+
     fun setMapContent(map: ZoneMap) = synchronized(this) {
         cursor.isVisible = false
+        waypoint.reset()
         this.map = map
         children.clear()
         children.add(prepare(map))
         children.add(cursorHint)
-//        children.add(ping)
+        children.add(locationPing)
+        children.add(copyPing)
         layout()
         redraw()
         resetColor(colorTransformer)
-        cursor.sizeProperty.bind(strokeWidthProperty)
+        deriveColor(falseColor.get())
         centerMap()
         zoomToBounds()
         layout()
     }
 
+    fun getMapShortName(): String? {
+        if (!this::map.isInitialized) return null
+        return map.shortName
+    }
+
     fun setColorTransformer(colorTransformer: ColorTransformer) {
+        logger.debug("applying ${colorTransformer::class.simpleName}")
         this.colorTransformer = colorTransformer
         resetColor(colorTransformer)
     }
@@ -126,10 +159,10 @@ class MapPane : StackPane() {
         if (!this::group.isInitialized) return
         cursor.isVisible = true
         cursor.setPos(Point2D(x, y))
-        if (centerPlayerCursor.get()) {
-            centerPoint(group.localToParent(cursor.getPosition()))
-        }
+        if (centerPlayerCursor.get()) centerPoint(group.localToParent(cursor.getPosition()))
         if (useZLayerViewDistance.get()) drawZLayer(z)
+        if (pingOnMove.get()) locationPing(Point2D(x, y))
+
     }
 
     fun moveCursorClick(target: Point2D) {
@@ -143,30 +176,19 @@ class MapPane : StackPane() {
 
     fun deriveColor(newColor: Color) {
         if (!this::map.isInitialized) return
+        logger.debug("deriving from color $newColor")
         resetColor(colorTransformer)
         map.elements.forEach { node ->
-            when (node) {
-                is MapLine -> node.stroke = (node.stroke as Color).deriveColor(
+            node.getViewColor()?.also {
+                node.setViewColor(it.deriveColor(
                     newColor.hue,
                     newColor.saturation,
                     newColor.brightness,
                     newColor.opacity
-                )
-                is MapPOI3D -> node.text.fill = (node.text.fill as Color).deriveColor(
-                    newColor.hue,
-                    newColor.saturation,
-                    newColor.brightness,
-                    newColor.opacity
-                )
-                is MapPOI2D -> node.text.fill = (node.text.fill as Color).deriveColor(
-                    newColor.hue,
-                    newColor.saturation,
-                    newColor.brightness,
-                    newColor.opacity
-                )
+                ))
             }
         }
-        cursor.fill = cursor.color.deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity)
+        cursor.fill = cursor.color.deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity).invert()
     }
 
     fun resetColor(colorTransformer: ColorTransformer) {
@@ -193,6 +215,11 @@ class MapPane : StackPane() {
                 node.setShow(false)
                 return@forEach
             }
+            // hide POI if switched off
+            if ((node is MapPOI3D || node is MapPOI2D) && !showPoiProperty.get()) {
+                node.setShow(false)
+                return@forEach
+            }
             // hide if not in z-range and switch is on
             if (useZLayerViewDistance.get()) {
                 val range = (zOrdinate.get() - zViewDistance.get()) .. (zOrdinate.get() + zViewDistance.get())
@@ -200,11 +227,6 @@ class MapPane : StackPane() {
                     node.setShow(false)
                     return@forEach
                 }
-            }
-            // hide POI if switch off
-            if ((node is MapPOI3D || node is MapPOI2D) && !showPoiProperty.get()) {
-                node.setShow(false)
-                return@forEach
             }
             // show otherwise
             node.setShow(true)
@@ -225,7 +247,7 @@ class MapPane : StackPane() {
         // unload
         unloadCurrent()
         // group map & cursor
-        group = Group(*map.toTypedArray(), cursor, ping)
+        group = Group(*map.toTypedArray(), cursor, waypoint)
 
         // register properties on elements
         registerNodeProperties()
@@ -252,7 +274,6 @@ class MapPane : StackPane() {
             // scroll handler
             addEventFilter(ScrollEvent.SCROLL) { mouseEvent ->
                 onScroll(mouseEvent)
-                mouseEvent.consume()
             }
             // move handler
             addEventFilter(MouseEvent.MOUSE_MOVED) { mouseEvent ->
@@ -279,12 +300,13 @@ class MapPane : StackPane() {
     fun setBackgroundColor(color: Color) {
         if (!this::map.isInitialized) return
         background = Background.fill(color)
-        setCursorColor(color.invert())
-        cursorHint.stroke = color.invert()
+        val inverted = color.invert()
+        setCursorColor(inverted)
+        cursorHint.stroke = inverted
         map.elements.forEach { node ->
             // increase stroke width when zooming out
-            (node as? MapPOI3D)?.text?.stroke = color.invert()
-            (node as? MapPOI2D)?.text?.stroke = color.invert()
+            (node as? MapPOI3D)?.text?.stroke = inverted
+            (node as? MapPOI2D)?.text?.stroke = inverted
         }
     }
 
@@ -297,33 +319,43 @@ class MapPane : StackPane() {
         }
     }
 
-    private val ping = Circle(8.0).also {
-        it.stroke = Color.RED
-        it.fill = Color.TRANSPARENT
-        it.isVisible = false
-        it.isMouseTransparent = true
-    }
-
-    val pt = PingTransition(30, ping)
-
     private fun onClick(mouseEvent: MouseEvent) {
         if (mouseEvent.button == MouseButton.SECONDARY) {
-            ping(mouseEvent)
+            val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
+
+            val parent = mouseEvent.pickResult.intersectedNode.parent
+            if(parent is WaypointMarker || parent is POI) return
+            // TODO
+            if (mouseEvent.isShiftDown) {
+                userPing(local.x, local.y, "Kasima")
+            } else {
+                copyPing(local)
+            }
+            clipboard.setContent(ClipboardContent().also {
+                val formatPing = formatPing(local, mouseEvent.target)
+                logger.debug("setting clipboard text: $formatPing")
+                it[DataFormat.PLAIN_TEXT] = formatPing
+            })
         }
     }
 
-    fun ping(mouseEvent: MouseEvent, centerAtPing: Boolean = false) {
-        val point2D = Point2D(mouseEvent.x, mouseEvent.y)
-        val local = group.parentToLocal(point2D)
-        ping.isVisible = true
-        ping.strokeWidth = (1.0 + 1.0 / group.scaleX)
-        ping.radius = (1.0 + 1.0 / group.scaleX) * 10
-        println(group.scaleX)
-        ping.centerX = local.x
-        ping.centerY = local.y
-        if (centerAtPing) centerPoint(group.localToParent(local))
-        pt.playFromStart()
-//        ft.playFromStart()
+    private fun formatPing(local: Point2D, target: EventTarget): String {
+        return "!ping ${map.shortName}, ${-local.y.roundToInt()}, ${-local.x.roundToInt()}"
+    }
+
+    fun locationPing(point: Point2D, centerAtPing: Boolean = false) {
+        locationPing.strokeWidth = (1.0 + 1.0 / group.scaleX)
+        val parent = group.localToParent(point)
+        locationPing.ping(parent.x, parent.y)
+        if (centerAtPing) {
+            centerPoint(parent)
+        }
+    }
+
+    fun copyPing(point: Point2D) {
+        copyPing.strokeWidth = (1.0 + 1.0 / group.scaleX)
+        val parent = group.localToParent(point)
+        copyPing.ping(parent.x, parent.y)
     }
 
     private fun onMouseReleased(mouseEvent: MouseEvent) {
@@ -336,7 +368,7 @@ class MapPane : StackPane() {
         initialTranslateX = group.translateX
         initialTranslateY = group.translateY
         setCursorOpaque(false)
-        mouseEvent.consume()
+//        mouseEvent.consume()
     }
 
     private fun onDrag(mouseEvent: MouseEvent) {
@@ -344,7 +376,7 @@ class MapPane : StackPane() {
             group.translateX = initialTranslateX + mouseEvent.x - mouseAnchorX
             group.translateY = initialTranslateY + mouseEvent.y - mouseAnchorY
             setCursorHintPosition(mouseEvent)
-            mouseEvent.consume()
+//            mouseEvent.consume()
         }
     }
 
@@ -391,7 +423,7 @@ class MapPane : StackPane() {
     }
 
     fun zoomToBounds() {
-        layout()
+//        layout()
         val f = min(
             width / group.boundsInLocal.width,
             height / group.boundsInLocal.height
@@ -399,20 +431,6 @@ class MapPane : StackPane() {
         group.scaleX = f
         group.scaleY = f
         strokeWidthProperty.set((1.0 / group.scaleY))
-    }
-
-    @PostConstruct
-    fun init() {
-        showPoiProperty.addListener { _, _, _ ->
-            redraw()
-        }
-        backgroundColor.addListener { _, _, v ->
-            if (v != null) setBackgroundColor(v)
-        }
-        falseColor.addListener { _, _, v ->
-            if (v != null) deriveColor(v)
-        }
-
     }
 
     fun setCursorTextVisible(v: Boolean) {
@@ -425,6 +443,18 @@ class MapPane : StackPane() {
 
     fun setCursorOpaque(visible: Boolean) {
         cursorHint.opacity = if (visible) 1.0 else 0.0
+    }
+
+    fun userPing(x: Double, y: Double, from: String) {
+        if (!this::map.isInitialized) return
+        if (!map.pointInBounds(x, y)) return
+        logger.debug("setting waypoint to $x, $y")
+        waypoint.setWaypoint(x, y, from)
+        centerPoint(group.localToParent(Point2D(x, y)))
+    }
+
+    fun resetWaypoint() {
+        waypoint.reset()
     }
 
     companion object {

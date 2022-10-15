@@ -25,6 +25,14 @@ data class MapLine(
         opacity = if(show) 1.0 else 0.0
     }
 
+    override fun setViewColor(color: Color) {
+        stroke = color
+    }
+
+    override fun getViewColor(): Color? {
+        return stroke as? Color
+    }
+
     companion object {
 
         fun buildFromLine(vararg line: String) : MapLine{

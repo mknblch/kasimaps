@@ -18,11 +18,11 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class PropertyConfig {
 
-    private val falseColor = SimpleObjectProperty(Color.BLACK)
-    private val backgroundColor = SimpleObjectProperty(Color.GRAY)
+    private val properties = PersistentProperties.load("config.json")
 
-    private val windowPosition = SimpleObjectProperty(Pair(0.0, 0.0))
-    private val windowSize = SimpleObjectProperty(Pair(0.0, 0.0))
+    private val falseColor = SimpleObjectProperty(Color.web(properties.getOrSet("falseColor", "#000000")))
+    private val backgroundColor = SimpleObjectProperty(Color.web(properties.getOrSet("backgroundColor", "#BFBFBF")))
+
     private val transparency = SimpleDoubleProperty(0.75)
 
     private val zViewDistance = SimpleDoubleProperty(35.0)
@@ -31,8 +31,8 @@ class PropertyConfig {
     private val centerPlayerCursor = SimpleBooleanProperty(true)
     private val showPoiProperty = SimpleBooleanProperty(true)
     private val showCursorHint = SimpleBooleanProperty(true)
+    private val pingOnMove = SimpleBooleanProperty(true)
 
-    private val properties = PersistentProperties.load("config.json")
 
     @Bean
     fun properties(): PersistentProperties = properties
@@ -55,12 +55,6 @@ class PropertyConfig {
     @Bean(name = ["showCursorHint"])
     fun showCursorHint() = showCursorHint
 
-    @Bean(name = ["windowPosition"])
-    fun windowPosition() = windowPosition
-
-    @Bean(name = ["windowSize"])
-    fun windowSize() = windowSize
-
     @Bean(name = ["transparency"])
     fun transparency() = transparency
 
@@ -69,4 +63,7 @@ class PropertyConfig {
 
     @Bean(name = ["backgroundColor"])
     fun backgroundColor() = backgroundColor
+
+    @Bean(name = ["pingOnMove"])
+    fun pingOnMove() = pingOnMove
 }

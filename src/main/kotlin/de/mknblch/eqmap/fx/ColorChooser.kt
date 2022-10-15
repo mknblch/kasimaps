@@ -3,10 +3,7 @@ package de.mknblch.eqmap.fx
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generateMonochromePalette
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generatePalette
 import javafx.beans.NamedArg
-import javafx.beans.property.DoubleProperty
-import javafx.beans.property.ReadOnlyObjectProperty
-import javafx.beans.property.ReadOnlyObjectWrapper
-import javafx.beans.property.SimpleDoubleProperty
+import javafx.beans.property.*
 import javafx.event.EventHandler
 import javafx.geometry.Bounds
 import javafx.geometry.Insets
@@ -28,21 +25,12 @@ internal open class ColorChooser @JvmOverloads constructor(
     /**
      * The color the user has selected or the default initial color (the first color in the palette)
      */
-    private val chosenColor = ReadOnlyObjectWrapper<Color>()
-
-    fun getChosenColor(): Color {
-        return chosenColor.get()
-    }
-
-    fun chosenColorProperty(): ReadOnlyObjectProperty<Color> {
-        return chosenColor.readOnlyProperty
-    }
+    val chosenColor = SimpleObjectProperty<Color>(Color.BLACK)
 
     /**
      * Preferred size for a web palette tile
      */
     private val prefTileSize: DoubleProperty = SimpleDoubleProperty(MIN_TILE_SIZE)
-
 
     init {
 

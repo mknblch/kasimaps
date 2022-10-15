@@ -1,6 +1,7 @@
 package de.mknblch.eqmap.zone
 
 import javafx.scene.Group
+import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
@@ -12,7 +13,7 @@ class MapPOI2D(
     val y: Double,
     override val color: Color,
     val size: Int,
-    val name: String,
+    override val name: String,
     val circle: Circle = Circle(x, y, max(size.toDouble(), 2.0)).also {
         it.stroke = color
         it.fill = color
@@ -21,7 +22,7 @@ class MapPOI2D(
         it.styleClass.add("mapPOIText")
     },
     override val zRange: ClosedRange<Double> = (-Double.MAX_VALUE..Double.MAX_VALUE)
-) : MapNode, Group(circle, text) {
+) : MapNode, POI, Group(circle, text) {
 
     private var shown = 0
     private val names = name.split('|').filter { it.isNotBlank() }.distinct()
@@ -36,9 +37,20 @@ class MapPOI2D(
         }
     }
 
+    override fun setViewColor(color: Color) {
+        text.fill = color
+        circle.stroke = color.invert()
+        circle.fill = color.invert()
+    }
+
+    override fun getViewColor(): Color? {
+        return text.fill as? Color
+    }
+
     init {
         styleClass.add("mapPOI")
         addEventHandler(MouseEvent.MOUSE_CLICKED) {
+            if (it.button != MouseButton.PRIMARY) return@addEventHandler
             val index = (++shown) % names.size
             text.text = formatIfMultiText(names, index)
         }
