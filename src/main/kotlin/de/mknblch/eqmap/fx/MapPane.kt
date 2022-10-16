@@ -54,6 +54,7 @@ class MapPane : StackPane() {
     private var cursor = Arrow(0.0, 0.0, 13.0, Color.web("#00CCFF"))
     private val cursorHint = Text(0.0, 0.0, "").also {
         it.isVisible = false
+        it.styleClass.add("cursorHint")
     }
     private val clipboard = Clipboard.getSystemClipboard()
 

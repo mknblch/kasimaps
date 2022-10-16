@@ -35,3 +35,7 @@
     -fx-view-order: -1.0;
     -fx-effect: dropshadow(gaussian, red, 2, 2, 0, 0);
 }
+
+.cursorHint {
+    -fx-fill: transparent;
+}
