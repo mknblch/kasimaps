@@ -28,6 +28,7 @@ class PingMarker(val size: Int, color: Color, duration: Duration = Duration(200.
 
         override fun interpolate(frac: Double) {
             val v = 1.0 / frac - 1.0
+            strokeWidth = v.coerceIn(1.0, 10.0)
             radius = (size * v).coerceIn(0.0, size.toDouble())
             opacity = if (v < 0.1) 0.0 else 0.9
 

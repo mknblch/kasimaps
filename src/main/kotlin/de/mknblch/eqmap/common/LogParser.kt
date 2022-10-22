@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 abstract class LogParser(val logfile: File) : AutoCloseable {
 
     private val active = AtomicBoolean(true)
-    private var randomAccessFile: RandomAccessFile = RandomAccessFile(logfile, "rw")
+    private var randomAccessFile: RandomAccessFile = RandomAccessFile(logfile, "r")
 
     init {
 
@@ -29,11 +29,16 @@ abstract class LogParser(val logfile: File) : AutoCloseable {
         var chr: Int
         var cr = false
         val builder = StringBuffer()
-
-        randomAccessFile.seek(randomAccessFile.length())
+        var index = randomAccessFile.length()
+        randomAccessFile.seek(index)
 
         Loop@ while (active.get()) {
+            if (randomAccessFile.length() < index) {
+                index = randomAccessFile.length()
+                randomAccessFile.seek(index)
+            }
             chr = randomAccessFile.read()
+            index++
             when {
                 // wait for input
                 chr == -1 -> {

@@ -29,21 +29,12 @@
             </Menu>
             <Menu fx:id="optionsMenu" mnemonicParsing="false" text="Options">
                 <items>
-                    <CustomCheckMenuItem fx:id="showCursorText" mnemonicParsing="false" selected="false" text="Cursor Position" />
-                    <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
                     <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" mnemonicParsing="false" text="Filter Z-Axis" />
+                    <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
+                    <CustomCheckMenuItem fx:id="showCursorText" mnemonicParsing="false" selected="false" text="Cursor Position" />
                     <CustomCheckMenuItem fx:id="pingOnMoveCheckMenuItem" mnemonicParsing="false" text="Ping on move" />
                     <SeparatorMenuItem mnemonicParsing="false" />
-                    <Menu mnemonicParsing="false" text="Background">
-                        <items>
-                            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Unspecified Action">
-                                <content>
-                                    <de.mknblch.eqmap.fx.BlackWhiteChooser fx:id="blackWhiteChooser" />
-                                </content>
-                            </CustomMenuItem>
-                        </items>
-                    </Menu>
-                    <Menu mnemonicParsing="false" text="Color">
+                    <Menu mnemonicParsing="false" text="Foreground">
                         <items>
                             <RadioMenuItem fx:id="originalRadio" mnemonicParsing="false" onAction="#setOriginalTransformer" selected="true" text="Original">
                                 <toggleGroup>
@@ -54,6 +45,29 @@
                             <CustomMenuItem hideOnClick="false" mnemonicParsing="false">
                                 <content>
                                     <de.mknblch.eqmap.fx.ColorChooser fx:id="colorChooser" />
+                                </content>
+                            </CustomMenuItem>
+                        </items>
+                    </Menu>
+                    <Menu mnemonicParsing="false" text="Background">
+                        <items>
+                            <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Unspecified Action">
+                                <content>
+                                    <de.mknblch.eqmap.fx.BlackWhiteChooser fx:id="blackWhiteChooser" />
+                                </content>
+                            </CustomMenuItem>
+                        </items>
+                    </Menu>
+                    <Menu mnemonicParsing="false" text="Cursor">
+                        <items>
+                     <CustomMenuItem mnemonicParsing="false" text="Unspecified Action">
+                        <content>
+                           <Slider fx:id="cursorScaleSlider" blockIncrement="1.0" majorTickUnit="1.0" max="250.0" min="100.0" minorTickCount="1" snapToTicks="true" />
+                        </content>
+                     </CustomMenuItem>
+                            <CustomMenuItem hideOnClick="false" mnemonicParsing="false">
+                                <content>
+                                    <de.mknblch.eqmap.fx.ColorChooser fx:id="cursorColorChooser" />
                                 </content>
                             </CustomMenuItem>
                         </items>

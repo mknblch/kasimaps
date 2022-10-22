@@ -39,3 +39,11 @@
 .cursorHint {
     -fx-fill: transparent;
 }
+
+.statusText {
+    -fx-fill: white;
+    -fx-padding: 10px;
+    -fx-border-insets: 10px;
+    -fx-background-insets: 10px;
+    -fx-effect: dropshadow(gaussian, black, 2, 2, 0, 0);
+}

@@ -2,10 +2,8 @@ package de.mknblch.eqmap.config
 
 import com.sun.javafx.geometry.BoundsUtils
 import de.mknblch.eqmap.common.PersistentProperties
-import javafx.beans.property.ObjectProperty
-import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.*
+import javafx.collections.FXCollections
 import javafx.geometry.Bounds
 import javafx.geometry.Point2D
 import javafx.scene.paint.Color
@@ -20,6 +18,7 @@ class PropertyConfig {
 
     private val properties = PersistentProperties.load("config.json")
 
+    private val cursorColor = SimpleObjectProperty(Color.web(properties.getOrSet("cursorColor", "#3322FF")))
     private val falseColor = SimpleObjectProperty(Color.web(properties.getOrSet("falseColor", "#000000")))
     private val backgroundColor = SimpleObjectProperty(Color.web(properties.getOrSet("backgroundColor", "#BFBFBF")))
 
@@ -27,7 +26,7 @@ class PropertyConfig {
 
     private val zViewDistance = SimpleDoubleProperty(35.0)
     private val strokeWidthProperty = SimpleDoubleProperty(1.0)
-    private val useZLayerViewDistance = SimpleBooleanProperty(true)
+    private val useZLayerViewDistance = SimpleMapProperty<String, Boolean>(FXCollections.observableHashMap())
     private val centerPlayerCursor = SimpleBooleanProperty(true)
     private val showPoiProperty = SimpleBooleanProperty(true)
     private val showCursorHint = SimpleBooleanProperty(true)
@@ -63,6 +62,9 @@ class PropertyConfig {
 
     @Bean(name = ["backgroundColor"])
     fun backgroundColor() = backgroundColor
+
+    @Bean(name = ["cursorColor"])
+    fun cursorColor() = cursorColor
 
     @Bean(name = ["pingOnMove"])
     fun pingOnMove() = pingOnMove

@@ -34,7 +34,6 @@ import kotlin.math.roundToInt
 @Component
 @FxmlResource("fxml/Map.fxml")
 class MapController : Initializable {
-
     @Autowired
     private lateinit var zones: List<ZoneMap>
 
@@ -64,6 +63,9 @@ class MapController : Initializable {
 
     @FXML
     private lateinit var colorChooser: ColorChooser
+
+    @FXML
+    private lateinit var cursorColorChooser: ColorChooser
 
     @FXML
     private lateinit var blackWhiteChooser: BlackWhiteChooser
@@ -98,9 +100,12 @@ class MapController : Initializable {
     @FXML
     private lateinit var originalRadio: RadioMenuItem
 
+    @FXML
+    private lateinit var cursorScaleSlider: Slider
+
     @Qualifier("useZLayerViewDistance")
     @Autowired
-    private lateinit var useZLayerViewDistance: SimpleBooleanProperty
+    private lateinit var useZLayerViewDistance: SimpleMapProperty<String, Boolean>
 
     @Qualifier("centerPlayerCursor")
     @Autowired
@@ -122,6 +127,10 @@ class MapController : Initializable {
     @Autowired
     private lateinit var backgroundColor: ObjectProperty<Color>
 
+    @Qualifier("cursorColor")
+    @Autowired
+    private lateinit var cursorColor: ObjectProperty<Color>
+
     @Qualifier("pingOnMove")
     @Autowired
     private lateinit var pingOnMove: BooleanProperty
@@ -139,10 +148,14 @@ class MapController : Initializable {
         centerCheckMenuItem.selectedProperty().addListener { _, _, v ->
             properties.set("centerPlayerCursor", v)
         }
-        // zlayer
-        zLayerCheckMenuItem.selectedProperty().set(properties.getOrSet("useZLayerViewDistance", false))
-        zLayerCheckMenuItem.selectedProperty().addListener { _, _, v ->
-            properties.set("useZLayerViewDistance", v)
+//        // zlayer
+//
+        zLayerCheckMenuItem.selectedProperty().addListener { _, _, v: Boolean ->
+            mapPane.getMapShortName()?.also {
+                properties.getMap<Boolean>("useZLayerViewDistance")[it] = v
+                useZLayerViewDistance[it] = v
+                mapPane.redraw()
+            }
         }
 
         showPoi.selectedProperty().set(properties.getOrSet("showPoi", true))
@@ -157,7 +170,7 @@ class MapController : Initializable {
         }
         // register properties
         centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
-        useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
+//        useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
         showPoiProperty.bind(showPoi.selectedProperty())
         //
         useZLayerViewDistance.addListener { _, _, _ ->
@@ -185,6 +198,12 @@ class MapController : Initializable {
             logger.debug("setting false color $v")
             properties.set("falseColor", v.toString())
         }
+        // cursor
+        cursorColorChooser.chosenColor.set(Color.web(properties.getOrSet("cursorColor", Color.BLUE.toString())))
+        cursorColor.bind(cursorColorChooser.chosenColor)
+        cursorColor.addListener { _, _, v ->
+            properties.set("cursorColor", v.toString())
+        }
         // background
         backgroundColor.bind(blackWhiteChooser.chosenColor)
         backgroundColor.addListener { _, _, v ->
@@ -202,7 +221,7 @@ class MapController : Initializable {
         // hide while out of focus
         parentPane.hoverProperty().addListener { _, _, v ->
             menuBar.opacity = if (v) 1.0 else 0.0
-            mapPane.setCursorOpaque(v)
+            mapPane.setCursorHintOpaque(v)
         }
         // cursor visibility
         showCursorText.selectedProperty().set(properties.getOrSet("showCursorText", true))
@@ -217,6 +236,12 @@ class MapController : Initializable {
             properties.set("enableWaypoint", v)
         }
 
+        mapPane.cursor.scaleProperty.bind(cursorScaleSlider.valueProperty().divide(100.0))
+        cursorScaleSlider.valueProperty().addListener { _, _, v ->
+            mapPane.redraw()
+            val scale = (v.toDouble() / 100.0)
+            mapPane.setStatusText("Cursor scale: ${scale.toInt()}%")
+        }
 
         when (properties.getOrSet("colorTransformer", "original")) {
             "z" -> zRadio.selectedProperty().set(true)
@@ -233,7 +258,7 @@ class MapController : Initializable {
     fun onMessageEvent(messageEvent: MessageEvent) {
         if(!enableWaypoint.selectedProperty().get()) return
         pingRegex.matchEntire(messageEvent.text.trim())?.run {
-            pingEvent(
+            onPing(
                 messageEvent.type,
                 messageEvent.from,
                 messageEvent.to,
@@ -245,7 +270,7 @@ class MapController : Initializable {
 
     }
 
-    private fun pingEvent(type: Type, from: String, to: String, zoneName: String, y: String, x: String) {
+    private fun onPing(type: Type, from: String, to: String, zoneName: String, y: String, x: String) {
         if (from == to || from == "You") return // ignore yourself
         if (mapPane.getMapShortName() != zoneName) return // only if current zone
         val ix = -(x.toDoubleOrNull() ?: return) // coordinates
@@ -259,12 +284,21 @@ class MapController : Initializable {
         logger.debug("${e.playerName} zoning to ${e.zone}")
         zones.firstOrNull { it.name.equals(e.zone, true) }?.also {
             Platform.runLater {
-                mapPane.setMapContent(it)
-                populateLayerMenu(it)
+                switchZone(it)
             }
         } ?: kotlin.run {
             logger.error("no mapping for zone '${e.zone}' found in ${zones.map { it.name }}")
         }
+    }
+
+    private fun switchZone(it: ZoneMap) {
+        mapPane.setMapContent(it)
+        populateLayerMenu(it)
+        zLayerCheckMenuItem.selectedProperty().set(
+            properties.getMap<Boolean>("useZLayerViewDistance").getOrDefault(
+                it.shortName, false
+            )
+        )
     }
 
     @EventListener
@@ -296,8 +330,7 @@ class MapController : Initializable {
         zones.forEach { map ->
             val element = MenuItem(map.name.capitalize())
             element.setOnAction {
-                mapPane.setMapContent(map)
-                populateLayerMenu(map)
+                switchZone(map)
             }
             zoneMenu.items.add(element)
         }

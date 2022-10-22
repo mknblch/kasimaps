@@ -25,6 +25,8 @@ class Arrow @JvmOverloads constructor(
 
     val sizeProperty: SimpleDoubleProperty = SimpleDoubleProperty(size)
 
+    val scaleProperty: SimpleDoubleProperty = SimpleDoubleProperty(1.0)
+
     fun getPosition(): Point2D {
         return Point2D(x2, y2)
     }
@@ -46,7 +48,7 @@ class Arrow @JvmOverloads constructor(
         val angle = atan2(y2 - y1, x2 - x1) - Math.PI / 2.0
         val sin = sin(angle)
         val cos = cos(angle)
-        val s = sizeProperty.get().coerceAtLeast(1.0) * size
+        val s = sizeProperty.get().coerceAtLeast(1.0) * size * scaleProperty.get()
         val x1 = (-1.0 / 3 * cos + sqrt32 * sin) * s + x2
         val y1 = (-1.0 / 3 * sin - sqrt32 * cos) * s + y2
         val x2 = (1.0 / 3 * cos + sqrt32 * sin) * s + x2
@@ -58,6 +60,9 @@ class Arrow @JvmOverloads constructor(
 
     init {
         sizeProperty.addListener { _, _, _ ->
+            draw()
+        }
+        scaleProperty.addListener { _, _, _ ->
             draw()
         }
         fill = color

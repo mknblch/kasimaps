@@ -2,14 +2,11 @@ package de.mknblch.eqmap.fx
 
 import de.mknblch.eqmap.common.ColorTransformer
 import de.mknblch.eqmap.common.OriginalTransformer
-import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.zone.*
-import javafx.beans.property.BooleanProperty
-import javafx.beans.property.DoubleProperty
-import javafx.beans.property.ObjectProperty
-import javafx.beans.property.SimpleDoubleProperty
+import javafx.beans.property.*
 import javafx.event.EventTarget
 import javafx.geometry.Point2D
+import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.input.*
@@ -51,11 +48,13 @@ class MapPane : StackPane() {
     private val copyPing = PingMarker(100, Color.SPRINGGREEN)
     private val waypoint = WaypointMarker()
     private var colorTransformer: ColorTransformer = OriginalTransformer
-    private var cursor = Arrow(0.0, 0.0, 13.0, Color.web("#00CCFF"))
+    val cursor = Arrow(0.0, 0.0, 13.0, Color.web("#00CCFF"))
     private val cursorHint = Text(0.0, 0.0, "").also {
         it.isVisible = false
         it.styleClass.add("cursorHint")
     }
+    private val statusLabel = StatusText()
+
     private val clipboard = Clipboard.getSystemClipboard()
 
     @Qualifier("zViewDistance")
@@ -72,7 +71,7 @@ class MapPane : StackPane() {
 
     @Qualifier("useZLayerViewDistance")
     @Autowired
-    private lateinit var useZLayerViewDistance: BooleanProperty
+    private lateinit var useZLayerViewDistance: SimpleMapProperty<String, Boolean>
 
     @Qualifier("centerPlayerCursor")
     @Autowired
@@ -94,13 +93,19 @@ class MapPane : StackPane() {
     @Autowired
     private lateinit var backgroundColor: ObjectProperty<Color>
 
+    @Qualifier("cursorColor")
+    @Autowired
+    private lateinit var cursorColor: ObjectProperty<Color>
+
     @PostConstruct
     fun init() {
         setBackgroundColor(backgroundColor.get())
         cursor.sizeProperty.bind(strokeWidthProperty)
-
         waypoint.scaleProperty.bind(strokeWidthProperty)
-
+        cursorColor.addListener { _,_,v ->
+            if (v != null) cursor.fill = v
+        }
+        cursor.fill = cursorColor.get()
         showPoiProperty.addListener { _, _, _ ->
             redraw()
         }
@@ -121,6 +126,8 @@ class MapPane : StackPane() {
         children.add(cursorHint)
         children.add(locationPing)
         children.add(copyPing)
+        children.add(statusLabel)
+        StackPane.setAlignment(statusLabel, Pos.BOTTOM_LEFT)
         layout()
         redraw()
         resetColor(colorTransformer)
@@ -150,7 +157,7 @@ class MapPane : StackPane() {
 
     fun manualSetZ(z: Double) {
         if (!this::map.isInitialized) return
-        if (!useZLayerViewDistance.get()) return
+        if (useZLayerViewDistance[map.shortName] != true) return
         val minZ: Double = map.elements.minOf { it.zRange.start }
         val maxZ: Double = map.elements.maxOf { it.zRange.endInclusive }
         drawZLayer(minZ + (maxZ - minZ) * z)
@@ -161,9 +168,8 @@ class MapPane : StackPane() {
         cursor.isVisible = true
         cursor.setPos(Point2D(x, y))
         if (centerPlayerCursor.get()) centerPoint(group.localToParent(cursor.getPosition()))
-        if (useZLayerViewDistance.get()) drawZLayer(z)
+        if (useZLayerViewDistance[map.shortName] == true) drawZLayer(z)
         if (pingOnMove.get()) locationPing(Point2D(x, y))
-
     }
 
     fun moveCursorClick(target: Point2D) {
@@ -189,7 +195,6 @@ class MapPane : StackPane() {
                 ))
             }
         }
-        cursor.fill = cursor.color.deriveColor(newColor.hue, newColor.saturation, newColor.brightness, newColor.opacity).invert()
     }
 
     fun resetColor(colorTransformer: ColorTransformer) {
@@ -222,7 +227,7 @@ class MapPane : StackPane() {
                 return@forEach
             }
             // hide if not in z-range and switch is on
-            if (useZLayerViewDistance.get()) {
+            if (useZLayerViewDistance[map.shortName] == true) {
                 val range = (zOrdinate.get() - zViewDistance.get()) .. (zOrdinate.get() + zViewDistance.get())
                 if (!node.inRangeTo(range)) {
                     node.setShow(false)
@@ -289,6 +294,7 @@ class MapPane : StackPane() {
         val b = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
         cursorHint.text = "( ${-b.y.roundToInt()} x ${-b.x.roundToInt()} )"
         setCursorHintPosition(mouseEvent)
+//        statusLabel.setStatusText(cursorHint.text)
     }
 
     private fun registerNodeProperties() {
@@ -302,8 +308,6 @@ class MapPane : StackPane() {
         if (!this::map.isInitialized) return
         background = Background.fill(color)
         val inverted = color.invert()
-        setCursorColor(inverted)
-        cursorHint.stroke = inverted
         map.elements.forEach { node ->
             // increase stroke width when zooming out
             (node as? MapPOI3D)?.text?.stroke = inverted
@@ -328,7 +332,7 @@ class MapPane : StackPane() {
             if(parent is WaypointMarker || parent is POI) return
             // TODO
             if (mouseEvent.isShiftDown) {
-                userPing(local.x, local.y, "Kasima")
+//                userPing(local.x, local.y, "Kasima")
             } else {
                 copyPing(local)
             }
@@ -336,6 +340,7 @@ class MapPane : StackPane() {
                 val formatPing = formatPing(local, mouseEvent.target)
                 logger.debug("setting clipboard text: $formatPing")
                 it[DataFormat.PLAIN_TEXT] = formatPing
+                statusLabel.setStatusText("Location copied to clipboard")
             })
         }
     }
@@ -345,7 +350,6 @@ class MapPane : StackPane() {
     }
 
     fun locationPing(point: Point2D, centerAtPing: Boolean = false) {
-        locationPing.strokeWidth = (1.0 + 1.0 / group.scaleX)
         val parent = group.localToParent(point)
         locationPing.ping(parent.x, parent.y)
         if (centerAtPing) {
@@ -354,13 +358,12 @@ class MapPane : StackPane() {
     }
 
     fun copyPing(point: Point2D) {
-        copyPing.strokeWidth = (1.0 + 1.0 / group.scaleX)
         val parent = group.localToParent(point)
         copyPing.ping(parent.x, parent.y)
     }
 
     private fun onMouseReleased(mouseEvent: MouseEvent) {
-        setCursorOpaque(true)
+        setCursorHintOpaque(true)
     }
 
     private fun onMousePressed(mouseEvent: MouseEvent) {
@@ -368,7 +371,7 @@ class MapPane : StackPane() {
         mouseAnchorY = mouseEvent.y
         initialTranslateX = group.translateX
         initialTranslateY = group.translateY
-        setCursorOpaque(false)
+        setCursorHintOpaque(false)
 //        mouseEvent.consume()
     }
 
@@ -392,6 +395,7 @@ class MapPane : StackPane() {
 
         if (event.isAltDown) {
             transparency.value = (transparency.value + v).coerceIn(0.2, 0.95)
+            statusLabel.setStatusText("Transparency: ${(transparency.value * 100).roundToInt()}%")
         } else if (event.isControlDown) {
             changeZAxis(wheelDelta)
         } else {
@@ -404,7 +408,7 @@ class MapPane : StackPane() {
     private fun changeZAxis(v: Double) {
         zOrdinate.set(zOrdinate.get() + v * 10)
         redraw()
-        logger.debug("changing Z-Axis ordinate to ${zOrdinate.get()}")
+        statusLabel.setStatusText("Z: ${zOrdinate.get().roundToInt()}")
     }
 
     private fun zoomAt(mousePoint: Point2D, v: Double) {
@@ -415,6 +419,7 @@ class MapPane : StackPane() {
             height / group.boundsInLocal.height
         ) * 0.75
         val value = max(f, group.scaleY + (group.scaleY * v))
+        statusLabel.setStatusText("Zoom: ${(value * 100).toInt()}%")
         logger.debug("zooming into $localBeforeScroll by ${(value * 100).toInt()}%")
         group.scaleX = value
         group.scaleY = value
@@ -438,11 +443,11 @@ class MapPane : StackPane() {
         cursorHint.isVisible = v
     }
 
-    fun setCursorColor(color: Color) {
+    fun setCursorHintColor(color: Color) {
         cursorHint.stroke = color
     }
 
-    fun setCursorOpaque(visible: Boolean) {
+    fun setCursorHintOpaque(visible: Boolean) {
         cursorHint.opacity = if (visible) 1.0 else 0.0
     }
 
@@ -452,10 +457,15 @@ class MapPane : StackPane() {
         logger.debug("setting waypoint to $x, $y")
         waypoint.setWaypoint(x, y, from)
         centerPoint(group.localToParent(Point2D(x, y)))
+        statusLabel.setStatusText("new waypoint from $from")
     }
 
     fun resetWaypoint() {
         waypoint.reset()
+    }
+
+    fun setStatusText(text: String) {
+        statusLabel.setStatusText(text)
     }
 
     companion object {

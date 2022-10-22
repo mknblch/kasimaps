@@ -36,3 +36,5 @@
 ![](doc/Animation4.gif)
 ![](doc/Animation.gif)
 ![](doc/Animation2.gif)
+
+<a href="https://www.flaticon.com/free-icons/dragon" title="dragon icons">Dragon icons created by Icongeek26 - Flaticon</a>

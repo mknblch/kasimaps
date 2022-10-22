@@ -27,6 +27,14 @@ class PersistentProperties(val file: File) {
         }
     }
 
+    inline fun <reified V : Any> getMap(key: String): MutableMap<String, V> {
+        return if (data.containsKey(key) && data[key] is Map<*, *>) data[key] as MutableMap<String, V> else kotlin.run {
+            HashMap<String, V>().also {
+                data[key] = it
+            }
+        }
+    }
+
     inline fun <reified V : Any> getOrEval(key: String, lambda: () -> V?): V? {
         return if (data.containsKey(key)) data[key] as V else kotlin.run {
             lambda()?.also {
@@ -53,12 +61,12 @@ class PersistentProperties(val file: File) {
 
         private val typeRef = object : TypeReference<MutableMap<String, Any>>() {}
 
-        private val ptv: PolymorphicTypeValidator =
-            BasicPolymorphicTypeValidator.builder().allowIfBaseType(Any::class.java).build()
+//        private val ptv: PolymorphicTypeValidator =
+//            BasicPolymorphicTypeValidator.builder().allowIfBaseType(Any::class.java).build()
         private val mapper = ObjectMapper()
             .registerKotlinModule().also {
                 it.writerWithDefaultPrettyPrinter()
-                it.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT)
+//                it.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT)
             }
 
         fun load(path: String): PersistentProperties {

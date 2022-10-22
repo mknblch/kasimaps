@@ -8,16 +8,19 @@ import de.mknblch.eqmap.config.SpringFXMLLoader
 import de.mknblch.eqmap.zone.ZoneMap
 import javafx.application.Platform
 import javafx.scene.Scene
+import javafx.scene.image.Image
 import javafx.scene.paint.Color
 import javafx.stage.DirectoryChooser
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.core.io.Resource
 import java.io.File
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
@@ -27,6 +30,9 @@ import javax.annotation.PreDestroy
 class Kasimaps : CommandLineRunner {
 
     private lateinit var mapController: MapController
+
+    @Value("classpath:dragon_ico.png")
+    private lateinit var icon: Resource
 
     @Autowired
     private lateinit var context: ConfigurableApplicationContext
@@ -58,6 +64,7 @@ class Kasimaps : CommandLineRunner {
             properties.get<Double>("y")?.also {
                 s.y = it
             }
+            s.icons.add(Image(icon.inputStream))
         }
 
 
