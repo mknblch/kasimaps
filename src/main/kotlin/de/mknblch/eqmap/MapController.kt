@@ -25,10 +25,15 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.net.URL
 import java.util.*
 import javax.annotation.PreDestroy
+import kotlin.math.absoluteValue
+import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 
 @Component
@@ -270,13 +275,17 @@ class MapController : Initializable {
 
     }
 
+    private var lastPos: Triple<Double, Double, Long>? = null
+
     private fun onPing(type: Type, from: String, to: String, zoneName: String, y: String, x: String) {
         if (from == to || from == "You") return // ignore yourself
         if (mapPane.getMapShortName() != zoneName) return // only if current zone
         val ix = -(x.toDoubleOrNull() ?: return) // coordinates
         val iy = -(y.toDoubleOrNull() ?: return)
         logger.debug("ping in $type, from $from at ($zoneName, $iy, $ix)")
-        mapPane.userPing(ix, iy, from)
+        Platform.runLater {
+            mapPane.userPing(ix, iy, from)
+        }
     }
 
     @EventListener
@@ -305,6 +314,16 @@ class MapController : Initializable {
     fun onLocationEvent(e: LocationEvent) {
         logger.debug("${e.playerName} moving to (x=${e.x.roundToInt()}, y=${e.y.roundToInt()}, z=${e.z.roundToInt()})")
         mapPane.moveCursor(e.x, e.y, e.z)
+
+        val speed = lastPos?.let {
+            val dt = System.currentTimeMillis() - it.third
+            sqrt((it.first - e.x).pow(2) + (it.second - e.y).pow(2)).absoluteValue * 1000 /
+                    dt
+        } ?: 0.0
+        lastPos = Triple(e.x, e.y, System.currentTimeMillis())
+        Platform.runLater {
+            mapPane.setStatusText("Relative speed: ${"%.2f".format(speed)}m/s")
+        }
     }
 
     @FXML

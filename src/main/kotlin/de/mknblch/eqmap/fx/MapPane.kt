@@ -100,6 +100,7 @@ class MapPane : StackPane() {
     @PostConstruct
     fun init() {
         setBackgroundColor(backgroundColor.get())
+//        setCursorHintColor(cursorColor.get())
         cursor.sizeProperty.bind(strokeWidthProperty)
         waypoint.scaleProperty.bind(strokeWidthProperty)
         cursorColor.addListener { _,_,v ->
@@ -294,7 +295,6 @@ class MapPane : StackPane() {
         val b = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
         cursorHint.text = "( ${-b.y.roundToInt()} x ${-b.x.roundToInt()} )"
         setCursorHintPosition(mouseEvent)
-//        statusLabel.setStatusText(cursorHint.text)
     }
 
     private fun registerNodeProperties() {
@@ -308,6 +308,7 @@ class MapPane : StackPane() {
         if (!this::map.isInitialized) return
         background = Background.fill(color)
         val inverted = color.invert()
+        setCursorHintColor(inverted)
         map.elements.forEach { node ->
             // increase stroke width when zooming out
             (node as? MapPOI3D)?.text?.stroke = inverted
