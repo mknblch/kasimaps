@@ -5,6 +5,10 @@
     -fx-control-inner-background-alt: derive(-fx-control-inner-background,-2%);
 }
 
+.parentPane {
+    -fx-background-color: transparent;
+}
+
 .custom-context-menu {
     -fx-pref-height: 100;
     -fx-min-height: 60;

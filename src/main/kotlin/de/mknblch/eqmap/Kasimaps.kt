@@ -79,8 +79,8 @@ class Kasimaps : CommandLineRunner {
             properties.getOrSet("height", 600.0),
             Color.TRANSPARENT
         )
+        scene.fill = null //Color.TRANSPARENT
         scene.stylesheets.add(javaClass.classLoader.getResource("style.css")!!.toExternalForm())
-        scene.fill = Color.TRANSPARENT
         stage.scene = scene
         stage.show()
 
@@ -107,9 +107,9 @@ class Kasimaps : CommandLineRunner {
 
             mapController.mapPane.setMapContent(zones[0])
             stage.isAlwaysOnTop = properties.getOrSet("lockWindow", false)
-            mapController.setStageOpacity(stage, properties.getOrSet("transparency", 0.9))
             mapController.mapPane.setCursorTextVisible(properties.getOrSet("showCursorText", true))
-            mapController.mapPane.setBackgroundColor(Color.web(properties.getOrSet("backgroundColor", "#BABABA")))
+//            mapController.mapPane.setBackgroundColor(Color.web(properties.getOrSet("backgroundColor", "#BABABA")))
+//            mapController.setAlpha(properties.getOrSet("alpha", 1.0))
             val colorTransformer = when (properties.getOrSet("colorTransformer", "original")) {
                 "z" -> ZColorTransformer(30)
                 else -> OriginalTransformer

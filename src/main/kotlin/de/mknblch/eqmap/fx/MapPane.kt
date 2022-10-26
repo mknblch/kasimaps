@@ -2,6 +2,7 @@ package de.mknblch.eqmap.fx
 
 import de.mknblch.eqmap.common.ColorTransformer
 import de.mknblch.eqmap.common.OriginalTransformer
+import de.mknblch.eqmap.common.withAlpha
 import de.mknblch.eqmap.zone.*
 import javafx.beans.property.*
 import javafx.event.EventTarget
@@ -65,9 +66,9 @@ class MapPane : StackPane() {
     @Autowired
     private lateinit var strokeWidthProperty: DoubleProperty
 
-    @Qualifier("transparency")
+    @Qualifier("alpha")
     @Autowired
-    private lateinit var transparency: DoubleProperty
+    private lateinit var alpha: DoubleProperty
 
     @Qualifier("useZLayerViewDistance")
     @Autowired
@@ -99,8 +100,6 @@ class MapPane : StackPane() {
 
     @PostConstruct
     fun init() {
-        setBackgroundColor(backgroundColor.get())
-//        setCursorHintColor(cursorColor.get())
         cursor.sizeProperty.bind(strokeWidthProperty)
         waypoint.scaleProperty.bind(strokeWidthProperty)
         cursorColor.addListener { _,_,v ->
@@ -116,9 +115,15 @@ class MapPane : StackPane() {
         falseColor.addListener { _, _, v ->
             if (v != null) deriveColor(v)
         }
+        alpha.addListener { _, _, v ->
+            setAlpha(v.toDouble())
+            statusLabel.setStatusText("Alpha: ${(v.toDouble() * 100).roundToInt()}%")
+        }
+        isPickOnBounds = true
     }
 
     fun setMapContent(map: ZoneMap) = synchronized(this) {
+        logger.debug("loading zone ${map.name}")
         cursor.isVisible = false
         waypoint.reset()
         this.map = map
@@ -136,6 +141,7 @@ class MapPane : StackPane() {
         centerMap()
         zoomToBounds()
         layout()
+        setBackgroundColor(backgroundColor.get())
     }
 
     fun getMapShortName(): String? {
@@ -255,7 +261,12 @@ class MapPane : StackPane() {
         unloadCurrent()
         // group map & cursor
         group = Group(*map.toTypedArray(), cursor, waypoint)
+            .also {
+            it.isPickOnBounds = true
+        }
 
+        this.isPickOnBounds = true
+        this.parent.isPickOnBounds = true
         // register properties on elements
         registerNodeProperties()
         // background for moving and scaling
@@ -263,6 +274,7 @@ class MapPane : StackPane() {
         with(enclosure) {
             // properties
             border = Border.EMPTY
+            isPickOnBounds = true
             // pressed handler
             addEventFilter(MouseEvent.MOUSE_PRESSED) { mouseEvent ->
                 onMousePressed(mouseEvent)
@@ -304,9 +316,18 @@ class MapPane : StackPane() {
         }
     }
 
+    fun setAlpha(alpha: Double) {
+        if (!this::map.isInitialized) return
+        statusLabel.setStatusText("Alpha: ${(alpha * 100).roundToInt()}%")
+        logger.debug("setting alpha to $alpha")
+        background = Background.fill(backgroundColor.get().withAlpha(alpha))
+    }
+
     fun setBackgroundColor(color: Color) {
         if (!this::map.isInitialized) return
-        background = Background.fill(color)
+        val withAlpha = color.withAlpha(alpha.get())
+        logger.debug("setting background color to $withAlpha")
+        background = Background.fill(withAlpha)
         val inverted = color.invert()
         setCursorHintColor(inverted)
         map.elements.forEach { node ->
@@ -328,15 +349,9 @@ class MapPane : StackPane() {
     private fun onClick(mouseEvent: MouseEvent) {
         if (mouseEvent.button == MouseButton.SECONDARY) {
             val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
-
             val parent = mouseEvent.pickResult.intersectedNode.parent
             if(parent is WaypointMarker || parent is POI) return
-            // TODO
-            if (mouseEvent.isShiftDown) {
-//                userPing(local.x, local.y, "Kasima")
-            } else {
-                copyPing(local)
-            }
+            showCopyPing(local)
             clipboard.setContent(ClipboardContent().also {
                 val formatPing = formatPing(local, mouseEvent.target)
                 logger.debug("setting clipboard text: $formatPing")
@@ -358,7 +373,7 @@ class MapPane : StackPane() {
         }
     }
 
-    fun copyPing(point: Point2D) {
+    fun showCopyPing(point: Point2D) {
         val parent = group.localToParent(point)
         copyPing.ping(parent.x, parent.y)
     }
@@ -373,7 +388,6 @@ class MapPane : StackPane() {
         initialTranslateX = group.translateX
         initialTranslateY = group.translateY
         setCursorHintOpaque(false)
-//        mouseEvent.consume()
     }
 
     private fun onDrag(mouseEvent: MouseEvent) {
@@ -381,7 +395,6 @@ class MapPane : StackPane() {
             group.translateX = initialTranslateX + mouseEvent.x - mouseAnchorX
             group.translateY = initialTranslateY + mouseEvent.y - mouseAnchorY
             setCursorHintPosition(mouseEvent)
-//            mouseEvent.consume()
         }
     }
 
@@ -395,8 +408,8 @@ class MapPane : StackPane() {
         val v = wheelDelta * 0.05
 
         if (event.isAltDown) {
-            transparency.value = (transparency.value + v).coerceIn(0.2, 0.95)
-            statusLabel.setStatusText("Transparency: ${(transparency.value * 100).roundToInt()}%")
+            alpha.value = (alpha.value + v).coerceIn(1.0 / 255, 1.0)
+            statusLabel.setStatusText("Transparency: ${(alpha.value * 100).roundToInt()}%")
         } else if (event.isControlDown) {
             changeZAxis(wheelDelta)
         } else {

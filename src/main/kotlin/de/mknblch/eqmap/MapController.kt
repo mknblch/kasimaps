@@ -3,6 +3,7 @@ package de.mknblch.eqmap
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.common.ZColorTransformer
+import de.mknblch.eqmap.common.withAlpha
 import de.mknblch.eqmap.config.*
 import de.mknblch.eqmap.fx.BlackWhiteChooser
 import de.mknblch.eqmap.fx.ColorChooser
@@ -14,6 +15,7 @@ import javafx.application.Platform
 import javafx.beans.property.*
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
+import javafx.geometry.Insets
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.*
@@ -25,8 +27,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
-import java.math.RoundingMode
 import java.net.URL
 import java.util.*
 import javax.annotation.PreDestroy
@@ -91,9 +91,6 @@ class MapController : Initializable {
     lateinit var lockWindowMenuItem: CustomCheckMenuItem
 
     @FXML
-    private lateinit var transparentWindow: CustomCheckMenuItem
-
-    @FXML
     private lateinit var pingOnMoveCheckMenuItem: CustomCheckMenuItem
 
     @FXML
@@ -108,6 +105,9 @@ class MapController : Initializable {
     @FXML
     private lateinit var cursorScaleSlider: Slider
 
+    @FXML
+    private lateinit var alphaSlider: Slider
+
     @Qualifier("useZLayerViewDistance")
     @Autowired
     private lateinit var useZLayerViewDistance: SimpleMapProperty<String, Boolean>
@@ -120,9 +120,9 @@ class MapController : Initializable {
     @Autowired
     private lateinit var showPoiProperty: SimpleBooleanProperty
 
-    @Qualifier("transparency")
+    @Qualifier("alpha")
     @Autowired
-    private lateinit var transparency: SimpleDoubleProperty
+    private lateinit var alpha: SimpleDoubleProperty
 
     @Qualifier("falseColor")
     @Autowired
@@ -146,7 +146,10 @@ class MapController : Initializable {
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         populateZoneMenu()
-        mapPane.background = Background.EMPTY
+//        mapPane.background = Background.EMPTY
+
+        alphaSlider.valueProperty().set(alpha.value * 255.0)
+        alpha.bind(alphaSlider.valueProperty().divide(255.0))
 
         // get ui state
         centerCheckMenuItem.selectedProperty().set(properties.getOrSet("centerPlayerCursor", true))
@@ -183,43 +186,36 @@ class MapController : Initializable {
         }
         val primaryStage: Stage = context.getBean("primaryStage") as Stage
         // transparency settings
-        transparentWindow.selectedProperty().set(properties.getOrSet("useTransparency", false))
-        transparentWindow.selectedProperty().addListener { _, _, newValue ->
-            primaryStage.opacity = if (newValue) transparency.get() else 1.0
-            properties.set("useTransparency", newValue)
-        }
-        transparency.addListener { _, _, v ->
-            setStageOpacity(primaryStage, v)
-            properties.set("transparency", v.toDouble())
+        alpha.addListener { _, _, v ->
+            setAlpha(v)
+            properties.set("alpha", v.toDouble())
         }
 
         // min max and drag listeners
         registerMaxMinListener(primaryStage)
         registerDragListener(primaryStage)
         // colors
-        colorChooser.chosenColor.set(Color.web(properties.getOrSet("falseColor", Color.WHITE.toString())))
+        colorChooser.chosenColor.set(falseColor.get())
         falseColor.bind(colorChooser.chosenColor)
         falseColor.addListener { _, _, v ->
-            logger.debug("setting false color $v")
             properties.set("falseColor", v.toString())
         }
         // cursor
-        cursorColorChooser.chosenColor.set(Color.web(properties.getOrSet("cursorColor", Color.BLUE.toString())))
+        cursorColorChooser.chosenColor.set(cursorColor.get())
         cursorColor.bind(cursorColorChooser.chosenColor)
         cursorColor.addListener { _, _, v ->
             properties.set("cursorColor", v.toString())
         }
         // background
+        blackWhiteChooser.chosenColor.set(backgroundColor.get())
         backgroundColor.bind(blackWhiteChooser.chosenColor)
         backgroundColor.addListener { _, _, v ->
-            logger.debug("setting background color $v")
             properties.set("backgroundColor", v.toString())
         }
 
         // lock window
         lockWindowMenuItem.selectedProperty().set(properties.getOrSet("lockWindow", false))
         lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
-            logger.debug("set alwaysOnTop to $v")
             primaryStage.isAlwaysOnTop = v
             properties.set("lockWindow", v)
         }
@@ -231,7 +227,6 @@ class MapController : Initializable {
         // cursor visibility
         showCursorText.selectedProperty().set(properties.getOrSet("showCursorText", true))
         showCursorText.selectedProperty().addListener { _, _, v ->
-            logger.debug("set alwaysOnTop to $v")
             mapPane.setCursorTextVisible(v)
             properties.set("showCursorText", v)
         }
@@ -272,7 +267,6 @@ class MapController : Initializable {
                 groupValues[3]
             )
         }
-
     }
 
     private var lastPos: Triple<Double, Double, Long>? = null
@@ -338,11 +332,9 @@ class MapController : Initializable {
         mapPane.setColorTransformer(OriginalTransformer)
     }
 
-    fun setStageOpacity(primaryStage: Stage, v: Number) {
-        if (!transparentWindow.selectedProperty().get()) {
-            return
-        }
-        primaryStage.opacity = v.toDouble()
+    fun setAlpha(v: Number) {
+        val color = backgroundColor.get().withAlpha(v.toDouble())
+        mapPane.setBackgroundColor(color)
     }
 
     private fun populateZoneMenu() {
@@ -401,10 +393,6 @@ class MapController : Initializable {
             yOffset = primaryStage.y - it.screenY;
             it.consume()
         }
-    }
-
-    @PreDestroy
-    fun destroy() {
     }
 
     @FXML

@@ -7,6 +7,8 @@ import de.mknblch.eqmap.zone.POI
 import javafx.scene.paint.Color
 import kotlin.math.min
 
+fun Color.withAlpha(alpha: Double): Color = Color(red, green, blue, alpha)
+
 interface ColorTransformer {
 
     fun apply(objects: Collection<MapNode>)
