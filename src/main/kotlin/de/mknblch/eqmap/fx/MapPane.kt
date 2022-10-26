@@ -119,7 +119,6 @@ class MapPane : StackPane() {
             setAlpha(v.toDouble())
             statusLabel.setStatusText("Alpha: ${(v.toDouble() * 100).roundToInt()}%")
         }
-        isPickOnBounds = true
     }
 
     fun setMapContent(map: ZoneMap) = synchronized(this) {
@@ -142,6 +141,7 @@ class MapPane : StackPane() {
         zoomToBounds()
         layout()
         setBackgroundColor(backgroundColor.get())
+        setStatusText("load ${map.name.capitalize()}")
     }
 
     fun getMapShortName(): String? {
@@ -261,12 +261,7 @@ class MapPane : StackPane() {
         unloadCurrent()
         // group map & cursor
         group = Group(*map.toTypedArray(), cursor, waypoint)
-            .also {
-            it.isPickOnBounds = true
-        }
 
-        this.isPickOnBounds = true
-        this.parent.isPickOnBounds = true
         // register properties on elements
         registerNodeProperties()
         // background for moving and scaling
@@ -274,7 +269,6 @@ class MapPane : StackPane() {
         with(enclosure) {
             // properties
             border = Border.EMPTY
-            isPickOnBounds = true
             // pressed handler
             addEventFilter(MouseEvent.MOUSE_PRESSED) { mouseEvent ->
                 onMousePressed(mouseEvent)
@@ -406,11 +400,7 @@ class MapPane : StackPane() {
     private fun onScroll(event: ScrollEvent) {
         val wheelDelta: Double = sign(event.deltaY)
         val v = wheelDelta * 0.05
-
-        if (event.isAltDown) {
-            alpha.value = (alpha.value + v).coerceIn(1.0 / 255, 1.0)
-            statusLabel.setStatusText("Transparency: ${(alpha.value * 100).roundToInt()}%")
-        } else if (event.isControlDown) {
+        if (event.isControlDown) {
             changeZAxis(wheelDelta)
         } else {
             zoomAt(Point2D(event.x, event.y), v)
