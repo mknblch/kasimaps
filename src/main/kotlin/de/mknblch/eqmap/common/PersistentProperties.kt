@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import javafx.beans.property.Property
+import javafx.beans.value.WritableValue
 import java.io.File
 import java.nio.file.Paths
 
@@ -15,6 +17,14 @@ class PersistentProperties(val file: File) {
     } else {
         HashMap()
     }
+
+    inline fun <reified V : Any> bind(key: String, default: V, property: Property<V>, crossinline func: (V) -> Any = { it } ) {
+        property.value = getOrSet(key, default)
+        property.addListener { _, _, v ->
+            set(key, func(v))
+        }
+    }
+
 
     inline fun <reified V : Any> get(key: String): V? {
         return if (data[key] is V) data[key] as V else null

@@ -71,8 +71,6 @@ class Kasimaps : CommandLineRunner {
         context.beanFactory.registerSingleton("primaryStage", stage)
         val (root, mapController) = loader.load(MapController::class.java)
 
-        this.mapController = mapController
-
         scene = Scene(
             root,
             properties.getOrSet("width", 800.0),
@@ -108,8 +106,6 @@ class Kasimaps : CommandLineRunner {
             mapController.mapPane.setMapContent(zones[0])
             stage.isAlwaysOnTop = properties.getOrSet("lockWindow", false)
             mapController.mapPane.setCursorTextVisible(properties.getOrSet("showCursorText", true))
-//            mapController.mapPane.setBackgroundColor(Color.web(properties.getOrSet("backgroundColor", "#BABABA")))
-//            mapController.setAlpha(properties.getOrSet("alpha", 1.0))
             val colorTransformer = when (properties.getOrSet("colorTransformer", "original")) {
                 "z" -> ZColorTransformer(30)
                 else -> OriginalTransformer

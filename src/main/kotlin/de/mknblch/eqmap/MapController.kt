@@ -15,7 +15,6 @@ import javafx.application.Platform
 import javafx.beans.property.*
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
-import javafx.geometry.Insets
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.*
@@ -29,7 +28,6 @@ import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import java.net.URL
 import java.util.*
-import javax.annotation.PreDestroy
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -146,16 +144,18 @@ class MapController : Initializable {
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         populateZoneMenu()
-//        mapPane.background = Background.EMPTY
 
         alphaSlider.valueProperty().set(alpha.value * 255.0)
         alpha.bind(alphaSlider.valueProperty().divide(255.0))
 
         // get ui state
-        centerCheckMenuItem.selectedProperty().set(properties.getOrSet("centerPlayerCursor", true))
-        centerCheckMenuItem.selectedProperty().addListener { _, _, v ->
-            properties.set("centerPlayerCursor", v)
-        }
+
+        properties.bind("centerPlayerCursor", true, centerCheckMenuItem.selectedProperty())
+
+//        centerCheckMenuItem.selectedProperty().set(properties.getOrSet("centerPlayerCursor", true))
+//        centerCheckMenuItem.selectedProperty().addListener { _, _, v ->
+//            properties.set("centerPlayerCursor", v)
+//        }
 //        // zlayer
 //
         zLayerCheckMenuItem.selectedProperty().addListener { _, _, v: Boolean ->
@@ -166,16 +166,21 @@ class MapController : Initializable {
             }
         }
 
-        showPoi.selectedProperty().set(properties.getOrSet("showPoi", true))
-        showPoi.selectedProperty().addListener { _, _, v ->
-            properties.set("showPoi", v)
-        }
 
-        pingOnMoveCheckMenuItem.selectedProperty().set(properties.getOrSet("pingOnMove", true))
+        properties.bind("showPoi", true, showPoi.selectedProperty())
+
+//        showPoi.selectedProperty().set(properties.getOrSet("showPoi", true))
+//        showPoi.selectedProperty().addListener { _, _, v ->
+//            properties.set("showPoi", v)
+//        }
+
+        properties.bind("pingOnMove", true, pingOnMoveCheckMenuItem.selectedProperty())
+//        pingOnMoveCheckMenuItem.selectedProperty().set(properties.getOrSet("pingOnMove", true))
         pingOnMove.bind(pingOnMoveCheckMenuItem.selectedProperty())
-        pingOnMove.addListener { _, _,v ->
-            properties.set("pingOnMove", v)
-        }
+//        pingOnMove.addListener { _, _,v ->
+//            properties.set("pingOnMove", v)
+//        }
+
         // register properties
         centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
 //        useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
@@ -192,8 +197,8 @@ class MapController : Initializable {
         }
 
         // min max and drag listeners
-        registerMaxMinListener(primaryStage)
-        registerDragListener(primaryStage)
+        registerMenuBarClickListener(primaryStage)
+        registerMenuBarDragListener(primaryStage)
         // colors
         colorChooser.chosenColor.set(falseColor.get())
         falseColor.bind(colorChooser.chosenColor)
@@ -363,7 +368,7 @@ class MapController : Initializable {
         }
     }
 
-    private fun registerMaxMinListener(primaryStage: Stage) {
+    private fun registerMenuBarClickListener(primaryStage: Stage) {
         menuBar.setOnMouseClicked {
             if (lockWindowMenuItem.selectedProperty().get()) {
                 return@setOnMouseClicked
@@ -379,7 +384,7 @@ class MapController : Initializable {
         }
     }
 
-    private fun registerDragListener(primaryStage: Stage) {
+    private fun registerMenuBarDragListener(primaryStage: Stage) {
         menuBar.setOnMouseDragged {
             if (lockWindowMenuItem.selectedProperty().get()) {
                 return@setOnMouseDragged
