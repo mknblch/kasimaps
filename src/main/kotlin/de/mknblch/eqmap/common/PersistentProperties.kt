@@ -1,14 +1,25 @@
 package de.mknblch.eqmap.common
 
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import javafx.beans.property.Property
-import javafx.beans.value.WritableValue
+import javafx.scene.paint.Color
 import java.io.File
+import java.io.IOException
 import java.nio.file.Paths
+
 
 class PersistentProperties(val file: File) {
 
@@ -18,13 +29,18 @@ class PersistentProperties(val file: File) {
         HashMap()
     }
 
-    inline fun <reified V : Any> bind(key: String, default: V, property: Property<V>, crossinline func: (V) -> Any = { it } ) {
-        property.value = getOrSet(key, default)
+    inline fun <reified V : Any> bind(
+        key: String,
+        default: V,
+        property: Property<V>,
+        crossinline serializer: (V) -> Any = { it },
+        crossinline deserializer: (Any) -> V = { it as V }
+    ) {
+        property.value = deserializer(getOrSet(key, default))
         property.addListener { _, _, v ->
-            set(key, func(v))
+            set(key, serializer(v))
         }
     }
-
 
     inline fun <reified V : Any> get(key: String): V? {
         return if (data[key] is V) data[key] as V else null
@@ -69,14 +85,47 @@ class PersistentProperties(val file: File) {
 
     companion object {
 
+        object ColorDeserializer : JsonDeserializer<Color>() {
+            @Throws(IOException::class)
+            override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Color {
+                return Color.web(p.valueAsString)
+            }
+        }
+
+        object ColorSerializer : StdSerializer<Color>(Color::class.java) {
+            @Throws(IOException::class)
+            override fun serialize(p0: Color, p1: JsonGenerator, p2: SerializerProvider) {
+                p1.writeString("""#${p0.toString().removePrefix("0x")}""")
+            }
+
+            override fun serializeWithType(
+                value: Color,
+                gen: JsonGenerator,
+                serializers: SerializerProvider,
+                typeSer: TypeSerializer
+            ) {
+                val typeId = typeSer.typeId(value, JsonToken.VALUE_STRING)
+                typeSer.writeTypePrefix(gen, typeId)
+                serialize(value, gen, serializers)
+                typeSer.writeTypeSuffix(gen, typeId)
+            }
+        }
+
+        private val colorModule = SimpleModule().also {
+            it.addSerializer(ColorSerializer)
+            it.addDeserializer(Color::class.java, ColorDeserializer)
+        }
+
         private val typeRef = object : TypeReference<MutableMap<String, Any>>() {}
 
-//        private val ptv: PolymorphicTypeValidator =
-//            BasicPolymorphicTypeValidator.builder().allowIfBaseType(Any::class.java).build()
+        private val ptv: PolymorphicTypeValidator =
+            BasicPolymorphicTypeValidator.builder().allowIfBaseType(Any::class.java).build()
         private val mapper = ObjectMapper()
-            .registerKotlinModule().also {
+            .registerKotlinModule()
+            .registerModule(colorModule)
+            .also {
                 it.writerWithDefaultPrettyPrinter()
-//                it.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT)
+                it.activateDefaultTyping(ptv, ObjectMapper.DefaultTyping.EVERYTHING)
             }
 
         fun load(path: String): PersistentProperties {

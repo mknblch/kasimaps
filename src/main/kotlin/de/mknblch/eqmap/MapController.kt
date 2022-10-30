@@ -37,6 +37,7 @@ import kotlin.math.sqrt
 @Component
 @FxmlResource("fxml/Map.fxml")
 class MapController : Initializable {
+
     @Autowired
     private lateinit var zones: List<ZoneMap>
 
@@ -106,123 +107,49 @@ class MapController : Initializable {
     @FXML
     private lateinit var alphaSlider: Slider
 
-    @Qualifier("useZLayerViewDistance")
-    @Autowired
-    private lateinit var useZLayerViewDistance: SimpleMapProperty<String, Boolean>
-
-    @Qualifier("centerPlayerCursor")
-    @Autowired
-    private lateinit var centerPlayerCursor: SimpleBooleanProperty
-
-    @Qualifier("showPoiProperty")
-    @Autowired
-    private lateinit var showPoiProperty: SimpleBooleanProperty
-
-    @Qualifier("alpha")
-    @Autowired
-    private lateinit var alpha: SimpleDoubleProperty
-
-    @Qualifier("falseColor")
-    @Autowired
-    private lateinit var falseColor: ObjectProperty<Color>
-
-    @Qualifier("backgroundColor")
-    @Autowired
-    private lateinit var backgroundColor: ObjectProperty<Color>
-
-    @Qualifier("cursorColor")
-    @Autowired
-    private lateinit var cursorColor: ObjectProperty<Color>
-
-    @Qualifier("pingOnMove")
-    @Autowired
-    private lateinit var pingOnMove: BooleanProperty
-
     private var xOffset: Double = 0.0
     private var yOffset: Double = 0.0
-
+    private var lastPos: Triple<Double, Double, Long>? = null
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         populateZoneMenu()
-
-        alphaSlider.valueProperty().set(alpha.value * 255.0)
-        alpha.bind(alphaSlider.valueProperty().divide(255.0))
-
-        // get ui state
-
-        properties.bind("centerPlayerCursor", true, centerCheckMenuItem.selectedProperty())
-
-//        centerCheckMenuItem.selectedProperty().set(properties.getOrSet("centerPlayerCursor", true))
-//        centerCheckMenuItem.selectedProperty().addListener { _, _, v ->
-//            properties.set("centerPlayerCursor", v)
-//        }
-//        // zlayer
-//
+        properties.bind("alpha", 1.0, mapPane.alpha)
+        alphaSlider.valueProperty().set(mapPane.alpha.value * 255.0)
+        mapPane.alpha.bind(alphaSlider.valueProperty().divide(255.0))
         zLayerCheckMenuItem.selectedProperty().addListener { _, _, v: Boolean ->
             mapPane.getMapShortName()?.also {
                 properties.getMap<Boolean>("useZLayerViewDistance")[it] = v
-                useZLayerViewDistance[it] = v
+                mapPane.useZLayerViewDistance[it] = v
                 mapPane.redraw()
             }
         }
-
-
         properties.bind("showPoi", true, showPoi.selectedProperty())
-
-//        showPoi.selectedProperty().set(properties.getOrSet("showPoi", true))
-//        showPoi.selectedProperty().addListener { _, _, v ->
-//            properties.set("showPoi", v)
-//        }
-
+        mapPane.showPoiProperty.bind(showPoi.selectedProperty())
         properties.bind("pingOnMove", true, pingOnMoveCheckMenuItem.selectedProperty())
-//        pingOnMoveCheckMenuItem.selectedProperty().set(properties.getOrSet("pingOnMove", true))
-        pingOnMove.bind(pingOnMoveCheckMenuItem.selectedProperty())
-//        pingOnMove.addListener { _, _,v ->
-//            properties.set("pingOnMove", v)
-//        }
-
+        mapPane.pingOnMove.bind(pingOnMoveCheckMenuItem.selectedProperty())
+        properties.bind("centerPlayerCursor", true, centerCheckMenuItem.selectedProperty())
         // register properties
-        centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
-//        useZLayerViewDistance.bind(zLayerCheckMenuItem.selectedProperty())
-        showPoiProperty.bind(showPoi.selectedProperty())
+        mapPane.centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())
+        mapPane.showPoiProperty.bind(showPoi.selectedProperty())
         //
-        useZLayerViewDistance.addListener { _, _, _ ->
-            mapPane.redraw()
-        }
         val primaryStage: Stage = context.getBean("primaryStage") as Stage
-        // transparency settings
-        alpha.addListener { _, _, v ->
-            setAlpha(v)
-            properties.set("alpha", v.toDouble())
-        }
-
         // min max and drag listeners
         registerMenuBarClickListener(primaryStage)
         registerMenuBarDragListener(primaryStage)
         // colors
-        colorChooser.chosenColor.set(falseColor.get())
-        falseColor.bind(colorChooser.chosenColor)
-        falseColor.addListener { _, _, v ->
-            properties.set("falseColor", v.toString())
-        }
+        properties.bind("falseColor", Color.RED, colorChooser.chosenColor)
+        mapPane.falseColor.bind(colorChooser.chosenColor)
         // cursor
-        cursorColorChooser.chosenColor.set(cursorColor.get())
-        cursorColor.bind(cursorColorChooser.chosenColor)
-        cursorColor.addListener { _, _, v ->
-            properties.set("cursorColor", v.toString())
-        }
+        properties.bind("cursorColor", Color.WHITE, cursorColorChooser.chosenColor)
+        mapPane.cursorColor.bind(cursorColorChooser.chosenColor)
         // background
-        blackWhiteChooser.chosenColor.set(backgroundColor.get())
-        backgroundColor.bind(blackWhiteChooser.chosenColor)
-        backgroundColor.addListener { _, _, v ->
-            properties.set("backgroundColor", v.toString())
-        }
+        properties.bind("backgroundColor", Color.BLACK, blackWhiteChooser.chosenColor)
+        mapPane.backgroundColor.bind(blackWhiteChooser.chosenColor)
 
         // lock window
-        lockWindowMenuItem.selectedProperty().set(properties.getOrSet("lockWindow", false))
+        properties.bind("lockWindow", false, lockWindowMenuItem.selectedProperty());
         lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
             primaryStage.isAlwaysOnTop = v
-            properties.set("lockWindow", v)
         }
         // hide while out of focus
         parentPane.hoverProperty().addListener { _, _, v ->
@@ -230,34 +157,27 @@ class MapController : Initializable {
             mapPane.setCursorHintOpaque(v)
         }
         // cursor visibility
-        showCursorText.selectedProperty().set(properties.getOrSet("showCursorText", true))
+        properties.bind("showCursorText", true, showCursorText.selectedProperty())
         showCursorText.selectedProperty().addListener { _, _, v ->
             mapPane.setCursorTextVisible(v)
-            properties.set("showCursorText", v)
         }
-        enableWaypoint.selectedProperty().set(properties.getOrSet("enableWaypoint", true))
+        properties.bind("enableWaypoint", true, enableWaypoint.selectedProperty())
         enableWaypoint.selectedProperty().addListener { _, _, v ->
             mapPane.resetWaypoint()
-            properties.set("enableWaypoint", v)
         }
-
         mapPane.cursor.scaleProperty.bind(cursorScaleSlider.valueProperty().divide(100.0))
         cursorScaleSlider.valueProperty().addListener { _, _, v ->
             mapPane.redraw()
             val scale = (v.toDouble() / 100.0)
             mapPane.setStatusText("Cursor scale: ${scale.toInt()}%")
         }
-
         when (properties.getOrSet("colorTransformer", "original")) {
             "z" -> zRadio.selectedProperty().set(true)
             else -> originalRadio.selectedProperty().set(true)
         }
         // draw
         mapPane.redraw()
-
     }
-
-    private val pingRegex = Regex("![Pp][Ii][Nn][Gg] ([a-zA-Z]+) *, *([-.\\d]+) *, *([-.\\d]+)")
 
     @EventListener
     fun onMessageEvent(messageEvent: MessageEvent) {
@@ -274,19 +194,6 @@ class MapController : Initializable {
         }
     }
 
-    private var lastPos: Triple<Double, Double, Long>? = null
-
-    private fun onPing(type: Type, from: String, to: String, zoneName: String, y: String, x: String) {
-        if (from == to || from == "You") return // ignore yourself
-        if (mapPane.getMapShortName() != zoneName) return // only if current zone
-        val ix = -(x.toDoubleOrNull() ?: return) // coordinates
-        val iy = -(y.toDoubleOrNull() ?: return)
-        logger.debug("ping in $type, from $from at ($zoneName, $iy, $ix)")
-        Platform.runLater {
-            mapPane.userPing(ix, iy, from)
-        }
-    }
-
     @EventListener
     fun onZoneEvent(e: ZoneEvent) {
         logger.debug("${e.playerName} zoning to ${e.zone}")
@@ -296,6 +203,17 @@ class MapController : Initializable {
             }
         } ?: kotlin.run {
             logger.error("no mapping for zone '${e.zone}' found in ${zones.map { it.name }}")
+        }
+    }
+
+    private fun onPing(type: Type, from: String, to: String, zoneName: String, y: String, x: String) {
+        if (from == to || from == "You") return // ignore yourself
+        if (mapPane.getMapShortName() != zoneName) return // only if current zone
+        val ix = -(x.toDoubleOrNull() ?: return) // coordinates
+        val iy = -(y.toDoubleOrNull() ?: return)
+        logger.debug("ping in $type, from $from at ($zoneName, $iy, $ix)")
+        Platform.runLater {
+            mapPane.userPing(ix, iy, from)
         }
     }
 
@@ -312,7 +230,6 @@ class MapController : Initializable {
     @EventListener
     fun onLocationEvent(e: LocationEvent) {
         logger.debug("${e.playerName} moving to (x=${e.x.roundToInt()}, y=${e.y.roundToInt()}, z=${e.z.roundToInt()})")
-        mapPane.moveCursor(e.x, e.y, e.z)
 
         val speed = lastPos?.let {
             val dt = System.currentTimeMillis() - it.third
@@ -321,7 +238,8 @@ class MapController : Initializable {
         } ?: 0.0
         lastPos = Triple(e.x, e.y, System.currentTimeMillis())
         Platform.runLater {
-            mapPane.setStatusText("Relative speed: ${"%.2f".format(speed)}m/s")
+            mapPane.moveCursor(e.x, e.y, e.z)
+            mapPane.setStatusText("Speed: ${"%.2f".format(speed)}p/s")
         }
     }
 
@@ -335,11 +253,6 @@ class MapController : Initializable {
     fun setOriginalTransformer() {
         properties.set("colorTransformer", "original")
         mapPane.setColorTransformer(OriginalTransformer)
-    }
-
-    fun setAlpha(v: Number) {
-        val color = backgroundColor.get().withAlpha(v.toDouble())
-        mapPane.setBackgroundColor(color)
     }
 
     private fun populateZoneMenu() {
@@ -408,5 +321,6 @@ class MapController : Initializable {
     companion object {
         private val logger = LoggerFactory.getLogger(MapController::class.java)
         private val zColorTransformer = ZColorTransformer(30)
+        private val pingRegex = Regex("![Pp][Ii][Nn][Gg] ([a-zA-Z]+) *, *([-.\\d]+) *, *([-.\\d]+)")
     }
 }

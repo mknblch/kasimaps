@@ -29,8 +29,6 @@ import javax.annotation.PreDestroy
 @SpringBootApplication
 class Kasimaps : CommandLineRunner {
 
-    private lateinit var mapController: MapController
-
     @Value("classpath:dragon_ico.png")
     private lateinit var icon: Resource
 
@@ -67,7 +65,6 @@ class Kasimaps : CommandLineRunner {
             s.icons.add(Image(icon.inputStream))
         }
 
-
         context.beanFactory.registerSingleton("primaryStage", stage)
         val (root, mapController) = loader.load(MapController::class.java)
 
@@ -100,7 +97,7 @@ class Kasimaps : CommandLineRunner {
         // TODO replace with something that works
         ResizeHelper.addResizeListener(mapController.lockWindowMenuItem.selectedProperty(), stage)
 
-        // RODO refactor
+        // TODO refactor
         Platform.runLater {
 
             mapController.mapPane.setMapContent(zones[0])
@@ -111,8 +108,6 @@ class Kasimaps : CommandLineRunner {
                 else -> OriginalTransformer
             }
             mapController.mapPane.setColorTransformer(colorTransformer)
-            mapController.mapPane.deriveColor(Color.web(properties.getOrSet("falseColor", "goldenrod")))
-
         }
     }
 
@@ -132,7 +127,6 @@ class Kasimaps : CommandLineRunner {
         properties.set("height", scene.height)
         properties.set("x", stage.x)
         properties.set("y", stage.y)
-
         properties.write()
         Platform.exit()
     }

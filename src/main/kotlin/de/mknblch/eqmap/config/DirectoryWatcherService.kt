@@ -72,7 +72,7 @@ class DirectoryWatcherService() {
     }
 
     private fun createParser(path: Path, character: String, server: String): EqlogEmitter {
-        logger.info("parsing events for $character on $server")
+        logger.info("creating parser for $character on $server")
         return EqlogEmitter(applicationEventPublisher, path, character, server)
     }
 

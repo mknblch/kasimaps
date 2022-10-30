@@ -24,9 +24,11 @@ data class MapPOI3D(
 
     override fun setShow(show: Boolean) {
         if (show) {
+            isMouseTransparent = false
             circle.opacity = 1.0
             text.opacity = 1.0
         } else {
+            isMouseTransparent = true
             circle.opacity = 0.0
             text.opacity = 0.0
         }

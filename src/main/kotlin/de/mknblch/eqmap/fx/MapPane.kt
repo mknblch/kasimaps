@@ -5,6 +5,7 @@ import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.withAlpha
 import de.mknblch.eqmap.zone.*
 import javafx.beans.property.*
+import javafx.collections.FXCollections
 import javafx.event.EventTarget
 import javafx.geometry.Point2D
 import javafx.geometry.Pos
@@ -16,11 +17,10 @@ import javafx.scene.layout.Border
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
+import javafx.scene.shape.Circle
 import javafx.scene.shape.Line
 import javafx.scene.text.Text
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
@@ -42,67 +42,45 @@ class MapPane : StackPane() {
     private var mouseAnchorY: Double = 0.0
     private var initialTranslateX: Double = 0.0
     private var initialTranslateY: Double = 0.0
-
     private val zOrdinate: DoubleProperty = SimpleDoubleProperty(0.0)
-
     private val locationPing = PingMarker(100, Color.web("#00CCFF"))
     private val copyPing = PingMarker(100, Color.SPRINGGREEN)
     private val waypoint = WaypointMarker()
     private var colorTransformer: ColorTransformer = OriginalTransformer
-    val cursor = Arrow(0.0, 0.0, 13.0, Color.web("#00CCFF"))
     private val cursorHint = Text(0.0, 0.0, "").also {
         it.isVisible = false
         it.styleClass.add("cursorHint")
     }
     private val statusLabel = StatusText()
-
+    private val strokeWidthProperty = SimpleDoubleProperty(1.0)
     private val clipboard = Clipboard.getSystemClipboard()
 
-    @Qualifier("zViewDistance")
-    @Autowired
-    private lateinit var zViewDistance: DoubleProperty
+    val cursor = Arrow(0.0, 0.0, 14.0, Color.WHITE)
 
-    @Qualifier("strokeWidthProperty")
-    @Autowired
-    private lateinit var strokeWidthProperty: DoubleProperty
+    val zViewDistance: DoubleProperty = SimpleDoubleProperty(35.0)
 
-    @Qualifier("alpha")
-    @Autowired
-    private lateinit var alpha: DoubleProperty
+    val alpha: DoubleProperty = SimpleDoubleProperty(1.0)
 
-    @Qualifier("useZLayerViewDistance")
-    @Autowired
-    private lateinit var useZLayerViewDistance: SimpleMapProperty<String, Boolean>
+    val useZLayerViewDistance: SimpleMapProperty<String, Boolean> =
+        SimpleMapProperty<String, Boolean>(FXCollections.observableHashMap())
 
-    @Qualifier("centerPlayerCursor")
-    @Autowired
-    private lateinit var centerPlayerCursor: BooleanProperty
+    val centerPlayerCursor: BooleanProperty = SimpleBooleanProperty()
 
-    @Qualifier("showPoiProperty")
-    @Autowired
-    private lateinit var showPoiProperty: BooleanProperty
+    val showPoiProperty: BooleanProperty = SimpleBooleanProperty()
 
-    @Qualifier("pingOnMove")
-    @Autowired
-    private lateinit var pingOnMove: BooleanProperty
+    val pingOnMove: BooleanProperty = SimpleBooleanProperty()
 
-    @Qualifier("falseColor")
-    @Autowired
-    private lateinit var falseColor: ObjectProperty<Color>
+    val falseColor: ObjectProperty<Color> = SimpleObjectProperty(Color.RED)
 
-    @Qualifier("backgroundColor")
-    @Autowired
-    private lateinit var backgroundColor: ObjectProperty<Color>
+    val backgroundColor: ObjectProperty<Color> = SimpleObjectProperty(Color.BLACK)
 
-    @Qualifier("cursorColor")
-    @Autowired
-    private lateinit var cursorColor: ObjectProperty<Color>
+    val cursorColor: ObjectProperty<Color> = SimpleObjectProperty(Color.WHITE)
 
     @PostConstruct
     fun init() {
         cursor.sizeProperty.bind(strokeWidthProperty)
         waypoint.scaleProperty.bind(strokeWidthProperty)
-        cursorColor.addListener { _,_,v ->
+        cursorColor.addListener { _, _, v ->
             if (v != null) cursor.fill = v
         }
         cursor.fill = cursorColor.get()
@@ -119,6 +97,13 @@ class MapPane : StackPane() {
             setAlpha(v.toDouble())
             statusLabel.setStatusText("Alpha: ${(v.toDouble() * 100).roundToInt()}%")
         }
+        useZLayerViewDistance.addListener { _, _, v ->
+            redraw()
+        }
+    }
+
+    fun setCursorColor(color: Color) {
+        cursor.fill = color
     }
 
     fun setMapContent(map: ZoneMap) = synchronized(this) {
@@ -133,6 +118,8 @@ class MapPane : StackPane() {
         children.add(copyPing)
         children.add(statusLabel)
         StackPane.setAlignment(statusLabel, Pos.BOTTOM_LEFT)
+//        children.add(lockButton)
+//        StackPane.setAlignment(lockButton, Pos.BOTTOM_RIGHT)
         layout()
         redraw()
         resetColor(colorTransformer)
@@ -162,14 +149,6 @@ class MapPane : StackPane() {
         centerPoint(group.localToParent(centerInLocal))
     }
 
-    fun manualSetZ(z: Double) {
-        if (!this::map.isInitialized) return
-        if (useZLayerViewDistance[map.shortName] != true) return
-        val minZ: Double = map.elements.minOf { it.zRange.start }
-        val maxZ: Double = map.elements.maxOf { it.zRange.endInclusive }
-        drawZLayer(minZ + (maxZ - minZ) * z)
-    }
-
     fun moveCursor(x: Double, y: Double, z: Double) {
         if (!this::group.isInitialized) return
         cursor.isVisible = true
@@ -179,27 +158,20 @@ class MapPane : StackPane() {
         if (pingOnMove.get()) locationPing(Point2D(x, y))
     }
 
-    fun moveCursorClick(target: Point2D) {
-        if (!this::group.isInitialized) return
-        cursor.isVisible = true
-        group.parentToLocal(target).also(cursor::setPos) // TODO
-        if (centerPlayerCursor.get()) {
-            centerPoint(group.localToParent(cursor.getPosition()))
-        }
-    }
-
     fun deriveColor(newColor: Color) {
         if (!this::map.isInitialized) return
         logger.debug("deriving from color $newColor")
         resetColor(colorTransformer)
         map.elements.forEach { node ->
             node.getViewColor()?.also {
-                node.setViewColor(it.deriveColor(
-                    newColor.hue,
-                    newColor.saturation,
-                    newColor.brightness,
-                    newColor.opacity
-                ))
+                node.setViewColor(
+                    it.deriveColor(
+                        newColor.hue,
+                        newColor.saturation,
+                        newColor.brightness,
+                        newColor.opacity
+                    )
+                )
             }
         }
     }
@@ -215,7 +187,7 @@ class MapPane : StackPane() {
     }
 
     fun redraw() {
-        if(!this::map.isInitialized) return
+        if (!this::map.isInitialized) return
         map.layer.forEach { layer ->
             redrawLayer(layer)
         }
@@ -235,7 +207,7 @@ class MapPane : StackPane() {
             }
             // hide if not in z-range and switch is on
             if (useZLayerViewDistance[map.shortName] == true) {
-                val range = (zOrdinate.get() - zViewDistance.get()) .. (zOrdinate.get() + zViewDistance.get())
+                val range = (zOrdinate.get() - zViewDistance.get())..(zOrdinate.get() + zViewDistance.get())
                 if (!node.inRangeTo(range)) {
                     node.setShow(false)
                     return@forEach
@@ -266,6 +238,7 @@ class MapPane : StackPane() {
         registerNodeProperties()
         // background for moving and scaling
         enclosure = Pane(group)
+
         with(enclosure) {
             // properties
             border = Border.EMPTY
@@ -292,7 +265,6 @@ class MapPane : StackPane() {
             addEventFilter(MouseEvent.MOUSE_MOVED) { mouseEvent ->
                 onMouseMoved(mouseEvent)
             }
-
         }
         return enclosure
     }
@@ -344,7 +316,7 @@ class MapPane : StackPane() {
         if (mouseEvent.button == MouseButton.SECONDARY) {
             val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
             val parent = mouseEvent.pickResult.intersectedNode.parent
-            if(parent is WaypointMarker || parent is POI) return
+            if (parent is WaypointMarker || parent is POI) return
             showCopyPing(local)
             clipboard.setContent(ClipboardContent().also {
                 val formatPing = formatPing(local, mouseEvent.target)
@@ -433,7 +405,6 @@ class MapPane : StackPane() {
     }
 
     fun zoomToBounds() {
-//        layout()
         val f = min(
             width / group.boundsInLocal.width,
             height / group.boundsInLocal.height
