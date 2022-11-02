@@ -118,8 +118,6 @@ class MapPane : StackPane() {
         children.add(copyPing)
         children.add(statusLabel)
         StackPane.setAlignment(statusLabel, Pos.BOTTOM_LEFT)
-//        children.add(lockButton)
-//        StackPane.setAlignment(lockButton, Pos.BOTTOM_RIGHT)
         layout()
         redraw()
         resetColor(colorTransformer)
@@ -315,8 +313,8 @@ class MapPane : StackPane() {
     private fun onClick(mouseEvent: MouseEvent) {
         if (mouseEvent.button == MouseButton.SECONDARY) {
             val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
-            val parent = mouseEvent.pickResult.intersectedNode.parent
-            if (parent is WaypointMarker || parent is POI) return
+//            val parent = mouseEvent.pickResult.intersectedNode.parent
+//            if (parent is WaypointMarker || parent is POI) return
             showCopyPing(local)
             clipboard.setContent(ClipboardContent().also {
                 val formatPing = formatPing(local, mouseEvent.target)

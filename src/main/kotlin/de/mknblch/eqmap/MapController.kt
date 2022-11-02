@@ -165,11 +165,11 @@ class MapController : Initializable {
         enableWaypoint.selectedProperty().addListener { _, _, v ->
             mapPane.resetWaypoint()
         }
+        properties.bind("cursorScale", 1.0, cursorScaleSlider.valueProperty())
         mapPane.cursor.scaleProperty.bind(cursorScaleSlider.valueProperty().divide(100.0))
         cursorScaleSlider.valueProperty().addListener { _, _, v ->
             mapPane.redraw()
-            val scale = (v.toDouble() / 100.0)
-            mapPane.setStatusText("Cursor scale: ${scale.toInt()}%")
+            mapPane.setStatusText("Cursor scale: ${v.toInt()}%")
         }
         when (properties.getOrSet("colorTransformer", "original")) {
             "z" -> zRadio.selectedProperty().set(true)

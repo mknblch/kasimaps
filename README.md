@@ -3,11 +3,13 @@
 ### Installation
 
 - install [Java](https://openjdk.org/) 
-- download current [version](https://github.com/mknblch/kasimaps/tree/develop/dist/snapshot)
+- download the [windows](https://github.com/mknblch/kasimaps/tree/develop/dist/snapshot/Kasimaps.jar) or [linux](https://github.com/mknblch/kasimaps/tree/develop/dist/snapshot/Kasimaps_lnx.jar) version
 - run using `java -jar Kasimaps.jar` or `start.bat` 
- 
+- **_config.json_ from previous versions must be removed or the app won't start**
+
 ### Features
 
+- on first start you will be asked for the Everquest root directory (not _/Logs_ !)
 - the program monitors Everquests `/log` directory and reacts to `/location` commands or zone-change
 - this behaviour can be activated using in-game command `/log on` or set as default in the ini-file
 - the current map can be switched using the menu
@@ -19,13 +21,13 @@
 
 - map can be dragged and zoomed using `mouse & mouse-wheel`
 - `App -> Lock Window` brings the window to the top and disables window-dragging and resizing
-- `App -> Transparent Window` enables transparent window
-- `ALT + mouse wheel` changes transparency (if enabled)
+- `App -> Reset` resets the EQ directory and restarts the log parser
 - `Options -> Color -> Z-Color` enables X Axis based coloring
 - `Options -> Filter Z-Axis` hides map data far above or below your current position
 - `CTRL + mouse-wheel` manually changes the Z-Position
 - `right click` copies the current position to clipboard
-- when the parser reads the position in chat it creates a single waypoint marker  
+- the position can be pasted directly into in-game chat (/say, /tell, /group, /ooc) 
+- when the parser reads the position in chat it creates a single waypoint marker
 
 #### p99 Zone-Data
 
