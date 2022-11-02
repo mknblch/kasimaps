@@ -23,7 +23,7 @@
 - `App -> Lock Window` brings the window to the top and disables window-dragging and resizing
 - `App -> Reset` resets the EQ directory and restarts the log parser
 - `Options -> Color -> Z-Color` enables X Axis based coloring
-- `Options -> Filter Z-Axis` hides map data far above or below your current position
+- `Options -> Filter Z-Axis` hides map data far above or below your current position 
 - `CTRL + mouse-wheel` manually changes the Z-Position
 - `right click` copies the current position to clipboard
 - the position can be pasted directly into in-game chat (/say, /tell, /group, /ooc) 
@@ -34,6 +34,7 @@
 - Map data taken from P1999 Wiki 10/2022
 - POIs have been grouped and merged by distance
 - `Click on POI` to cycle through the names
+- Since locations on wiki mostly miss the Z part the p99 POI data will be visible regardless of your current position
 
 ![](doc/Animation4.gif)
 ![](doc/Animation.gif)
