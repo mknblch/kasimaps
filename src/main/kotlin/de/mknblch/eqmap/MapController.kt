@@ -90,9 +90,6 @@ class MapController : Initializable {
     lateinit var lockWindowMenuItem: CustomCheckMenuItem
 
     @FXML
-    private lateinit var pingOnMoveCheckMenuItem: CustomCheckMenuItem
-
-    @FXML
     private lateinit var enableWaypoint: CustomCheckMenuItem
 
     @FXML
@@ -125,8 +122,6 @@ class MapController : Initializable {
         }
         properties.bind("showPoi", true, showPoi.selectedProperty())
         mapPane.showPoiProperty.bind(showPoi.selectedProperty())
-        properties.bind("pingOnMove", true, pingOnMoveCheckMenuItem.selectedProperty())
-        mapPane.pingOnMove.bind(pingOnMoveCheckMenuItem.selectedProperty())
         properties.bind("centerPlayerCursor", true, centerCheckMenuItem.selectedProperty())
         // register properties
         mapPane.centerPlayerCursor.bind(centerCheckMenuItem.selectedProperty())

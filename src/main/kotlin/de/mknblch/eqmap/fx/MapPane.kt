@@ -68,8 +68,6 @@ class MapPane : StackPane() {
 
     val showPoiProperty: BooleanProperty = SimpleBooleanProperty()
 
-    val pingOnMove: BooleanProperty = SimpleBooleanProperty()
-
     val falseColor: ObjectProperty<Color> = SimpleObjectProperty(Color.RED)
 
     val backgroundColor: ObjectProperty<Color> = SimpleObjectProperty(Color.BLACK)
@@ -153,7 +151,7 @@ class MapPane : StackPane() {
         cursor.setPos(Point2D(x, y))
         if (centerPlayerCursor.get()) centerPoint(group.localToParent(cursor.getPosition()))
         if (useZLayerViewDistance[map.shortName] == true) drawZLayer(z)
-        if (pingOnMove.get()) locationPing(Point2D(x, y))
+        locationPing(Point2D(x, y))
     }
 
     fun deriveColor(newColor: Color) {

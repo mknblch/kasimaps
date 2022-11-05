@@ -31,7 +31,6 @@
                     <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" mnemonicParsing="false" text="Filter Z-Axis" />
                     <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
                     <CustomCheckMenuItem fx:id="showCursorText" mnemonicParsing="false" selected="false" text="Cursor Position" />
-                    <CustomCheckMenuItem fx:id="pingOnMoveCheckMenuItem" mnemonicParsing="false" text="Ping on move" />
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <Menu mnemonicParsing="false" text="Foreground">
                         <items>
