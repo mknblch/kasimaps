@@ -11,6 +11,7 @@
             <Menu fx:id="appMenu" mnemonicParsing="false" text="App">
                 <items>
                     <CustomCheckMenuItem fx:id="lockWindowMenuItem" mnemonicParsing="false" text="Lock Window" />
+                    <CustomCheckMenuItem fx:id="syncMenuItem" mnemonicParsing="false" text="Synchronization" />
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <MenuItem fx:id="resetMenuItem" mnemonicParsing="false" text="Reset" />
                     <SeparatorMenuItem mnemonicParsing="false" />

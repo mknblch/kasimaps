@@ -27,15 +27,13 @@ class SpringFXMLLoader @Autowired constructor(
 
     @Throws(IOException::class)
     fun <T> load(fxmlPath: String, clazz: Class<T>): Pair<Parent, T> {
-        logger.trace("loading ${clazz.simpleName}")
-        val loader = FXMLLoader()
+        logger.debug("loading ${clazz.simpleName}")
+        val loader = FXMLLoader(javaClass.classLoader.getResource(fxmlPath))
         val controller: T = beanFactory.getBean(clazz) ?: throw IllegalArgumentException("Controller not found $clazz")
         with(loader) {
-            controllerFactory = Callback {
-                beanFactory.getBean(it)
-            }
+            controllerFactory = Callback { controller }
             resources = resourceBundle
-            location = javaClass.classLoader.getResource(fxmlPath)
+//            location = javaClass.classLoader.getResource(fxmlPath)
             loadListener = AutowiringLoadListener(beanFactory)
         }
         return Pair(loader.load(), controller)
@@ -56,59 +54,76 @@ class SpringFXMLLoader @Autowired constructor(
 class AutowiringLoadListener(private val beanFactory: AutowireCapableBeanFactory) : LoadListener {
 
     override fun readImportProcessingInstruction(target: String?) {
+        logger.debug("readImportProcessingInstruction $target")
     }
 
     override fun readLanguageProcessingInstruction(language: String?) {
+        logger.debug("readLanguageProcessingInstruction $language")
     }
 
     override fun readComment(comment: String?) {
+        logger.debug("readComment $comment")
     }
 
     override fun beginInstanceDeclarationElement(type: Class<*>?) {
+        logger.debug("beginInstanceDeclarationElement ${type?.simpleName}")
     }
 
     override fun beginUnknownTypeElement(name: String?) {
+        logger.debug("beginUnknownTypeElement $name")
     }
 
     override fun beginIncludeElement() {
+        logger.debug("beginIncludeElement")
     }
 
     override fun beginReferenceElement() {
+        logger.debug("beginReferenceElement")
     }
 
     override fun beginCopyElement() {
+        logger.debug("beginCopyElement")
     }
 
     override fun beginRootElement() {
+        logger.debug("beginRootElement")
     }
 
     override fun beginPropertyElement(name: String?, sourceType: Class<*>?) {
+        logger.debug("beginPropertyElement $name ${sourceType?.simpleName}")
     }
 
     override fun beginUnknownStaticPropertyElement(name: String?) {
+        logger.debug("beginUnknownStaticPropertyElement $name")
     }
 
     override fun beginScriptElement() {
+        logger.debug("beginScriptElement")
     }
 
     override fun beginDefineElement() {
+        logger.debug("beginDefineElement")
     }
 
     override fun readInternalAttribute(name: String?, value: String?) {
+        logger.debug("readInternalAttribute $name $value")
     }
 
     override fun readPropertyAttribute(name: String?, sourceType: Class<*>?, value: String?) {
+        logger.debug("readPropertyAttribute $name")
     }
 
     override fun readUnknownStaticPropertyAttribute(name: String?, value: String?) {
+        logger.debug("readUnknownStaticPropertyAttribute $name")
     }
 
     override fun readEventHandlerAttribute(name: String?, value: String?) {
+        logger.debug("readEventHandlerAttribute $name")
     }
 
     override fun endElement(value: Any) {
         val objectId = System.identityHashCode(value).toString(16)
-        logger.trace("autowiring ${value.javaClass}#$objectId")
+        logger.debug("autowiring ${value.javaClass}#$objectId")
         beanFactory.autowireBean(value)
         beanFactory.initializeBean(value, objectId)
     }

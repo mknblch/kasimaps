@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<DialogPane fx:id="dialogPane" fx:controller="de.mknblch.eqmap.fx.NetworkDialogController" xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1">
+    <content>
+        <GridPane alignment="TOP_CENTER" prefHeight="132.0" prefWidth="266.0">
+
+            <children>
+                <Label text="Server" GridPane.columnIndex="1" />
+                <Label text="Channel" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                <Label text="Nickname" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                <Label text="Server Password" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                <Label text="Channel Password" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                <TextField fx:id="serverTextField" GridPane.columnIndex="2">
+               <GridPane.margin>
+                  <Insets bottom="1.0" left="5.0" top="1.0" />
+               </GridPane.margin></TextField>
+                <TextField fx:id="channelTextField" GridPane.columnIndex="2" GridPane.rowIndex="1">
+               <GridPane.margin>
+                  <Insets bottom="1.0" left="5.0" top="1.0" />
+               </GridPane.margin></TextField>
+                <TextField fx:id="nickTextField" GridPane.columnIndex="2" GridPane.rowIndex="2">
+               <GridPane.margin>
+                  <Insets bottom="1.0" left="5.0" top="1.0" />
+               </GridPane.margin></TextField>
+                <PasswordField fx:id="serverPasswordTextField" GridPane.columnIndex="2" GridPane.rowIndex="3">
+               <GridPane.margin>
+                  <Insets bottom="1.0" left="5.0" top="1.0" />
+               </GridPane.margin></PasswordField>
+                <PasswordField fx:id="channelPasswordTextField" GridPane.columnIndex="2" GridPane.rowIndex="4">
+               <GridPane.margin>
+                  <Insets bottom="1.0" left="5.0" top="1.0" />
+               </GridPane.margin></PasswordField>
+            </children>
+         <columnConstraints>
+            <ColumnConstraints />
+            <ColumnConstraints maxWidth="105.0" minWidth="99.0" prefWidth="105.0" />
+            <ColumnConstraints maxWidth="147.0" minWidth="141.0" prefWidth="141.0" />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints />
+            <RowConstraints />
+            <RowConstraints />
+            <RowConstraints />
+            <RowConstraints />
+         </rowConstraints>
+        </GridPane>
+    </content>
+   <buttonTypes>
+      <ButtonType fx:constant="OK" />
+      <ButtonType fx:constant="CANCEL" />
+   </buttonTypes>
+   <header>
+      <Label alignment="CENTER" contentDisplay="CENTER" text="IRC Network Configuration" />
+   </header>
+</DialogPane>

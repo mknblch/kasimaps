@@ -5,10 +5,9 @@ import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.common.ZColorTransformer
 import de.mknblch.eqmap.common.withAlpha
 import de.mknblch.eqmap.config.*
+import de.mknblch.eqmap.fx.*
 import de.mknblch.eqmap.fx.BlackWhiteChooser
 import de.mknblch.eqmap.fx.ColorChooser
-import de.mknblch.eqmap.fx.CustomCheckMenuItem
-import de.mknblch.eqmap.fx.MapPane
 import de.mknblch.eqmap.zone.LayerComparator
 import de.mknblch.eqmap.zone.ZoneMap
 import javafx.application.Platform
@@ -39,10 +38,13 @@ import kotlin.math.sqrt
 class MapController : Initializable {
 
     @Autowired
-    private lateinit var zones: List<ZoneMap>
+    private lateinit var loader: SpringFXMLLoader
 
     @Autowired
     private lateinit var context: ConfigurableApplicationContext
+
+    @Autowired
+    private lateinit var zones: List<ZoneMap>
 
     @Autowired
     private lateinit var properties: PersistentProperties
@@ -73,6 +75,9 @@ class MapController : Initializable {
 
     @FXML
     private lateinit var blackWhiteChooser: BlackWhiteChooser
+
+    @FXML
+    private lateinit var syncMenuItem: CustomCheckMenuItem
 
     @FXML
     private lateinit var showPoi: CustomCheckMenuItem
@@ -110,7 +115,7 @@ class MapController : Initializable {
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         populateZoneMenu()
-        properties.bind("alpha", 1.0, mapPane.alpha)
+        properties.bind("alpha", 0.8, mapPane.alpha)
         alphaSlider.valueProperty().set(mapPane.alpha.value * 255.0)
         mapPane.alpha.bind(alphaSlider.valueProperty().divide(255.0))
         zLayerCheckMenuItem.selectedProperty().addListener { _, _, v: Boolean ->
@@ -166,7 +171,13 @@ class MapController : Initializable {
             mapPane.redraw()
             mapPane.setStatusText("Cursor scale: ${v.toInt()}%")
         }
-        when (properties.getOrSet("colorTransformer", "original")) {
+        properties.bind("sync", false, syncMenuItem.selectedProperty())
+        syncMenuItem.selectedProperty().addListener { _, _, v ->
+            if (!v) return@addListener
+            val (_, networkDialogController) = loader.load(NetworkDialogController::class.java)
+            println(networkDialogController.show(primaryStage))
+        }
+        when (properties.getOrSet("colorTransformer", "z")) {
             "z" -> zRadio.selectedProperty().set(true)
             else -> originalRadio.selectedProperty().set(true)
         }

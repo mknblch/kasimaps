@@ -42,6 +42,20 @@ class PersistentProperties(val file: File) {
         }
     }
 
+    inline fun <reified V : Any> bind(
+        key: String,
+        property: Property<V>,
+        crossinline serializer: (V) -> Any = { it },
+        crossinline deserializer: (Any) -> V = { it as V }
+    ) {
+        get<V>(key)?.let(deserializer).also {
+            property.value = it
+        }
+        property.addListener { _, _, v ->
+            set(key, serializer(v))
+        }
+    }
+
     inline fun <reified V : Any> get(key: String): V? {
         return if (data[key] is V) data[key] as V else null
     }
