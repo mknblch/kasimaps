@@ -2,13 +2,11 @@ package de.mknblch.eqmap.fx
 
 import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.config.FxmlResource
+import de.mknblch.eqmap.config.IRCNetworkConfig
 import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.scene.Scene
-import javafx.scene.control.ButtonType
-import javafx.scene.control.DialogPane
-import javafx.scene.control.PasswordField
-import javafx.scene.control.TextField
+import javafx.scene.control.*
 import javafx.stage.Modality
 import javafx.stage.Stage
 import javafx.stage.StageStyle
@@ -18,16 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import kotlin.random.Random
-import kotlin.random.nextULong
-
-
-data class IRCNetworkConfig(
-    val host: String,
-    val chan: String,
-    val nickName: String,
-    val chanPassword: String?,
-    val serverPassword: String?,
-)
 
 @Lazy
 @Component
@@ -44,16 +32,25 @@ class NetworkDialogController {
     private lateinit var serverTextField: TextField
 
     @FXML
+    private lateinit var portTextField: TextField
+
+    @FXML
+    private lateinit var secureCheckBox: CheckBox
+
+    @FXML
     private lateinit var channelTextField: TextField
 
     @FXML
     private lateinit var nickTextField: TextField
 
     @FXML
-    private lateinit var serverPasswordTextField: PasswordField
+    private lateinit var serverPasswordField: TextField
 
     @FXML
-    private lateinit var channelPasswordTextField: PasswordField
+    private lateinit var channelPasswordTextField: TextField
+
+    @FXML
+    private lateinit var encryptionTextField: TextField
 
     private var xOffset = 0.0
     private var yOffset = 0.0
@@ -69,25 +66,11 @@ class NetworkDialogController {
         initTextFields()
 
         dialogPane.lookupButton(ButtonType.CANCEL).setOnMouseClicked {
-            configuration = null
-            stage.close()
+            onCancelButtonClick(stage)
         }
 
         dialogPane.lookupButton(ButtonType.OK).setOnMouseClicked {
-            configuration = IRCNetworkConfig(
-                host = serverTextField.textProperty().get(),
-                chan = channelTextField.textProperty().get(),
-                nickName = nickTextField.textProperty().get(),
-                chanPassword = serverPasswordTextField.textProperty().get(),
-                serverPassword = channelPasswordTextField.textProperty().get(),
-            )
-            properties.set("ircServer", serverTextField.textProperty().get())
-            properties.set("ircChannel", channelTextField.textProperty().get())
-            properties.set("ircNickname", nickTextField.textProperty().get())
-            properties.set("ircServerPassword", serverPasswordTextField.textProperty().get())
-            properties.set("ircChannelPassword", channelPasswordTextField.textProperty().get())
-
-            stage.close()
+            onOKButtonClick(stage)
         }
 
         //
@@ -96,12 +79,41 @@ class NetworkDialogController {
         return configuration
     }
 
+    private fun onCancelButtonClick(stage: Stage) {
+        configuration = null
+        stage.close()
+    }
+
     private fun initTextFields() {
         serverTextField.textProperty().set(properties.getOrSet("ircServer", "irc.quakenet.org"))
         channelTextField.textProperty().set(properties.getOrSet("ircChannel", "#everquest"))
-        nickTextField.textProperty().set(properties.getOrSet("ircNickname", Random.nextULong().toString(16)))
-        serverPasswordTextField.textProperty().set(properties.get("ircServerPassword"))
+        nickTextField.textProperty().set(properties.getOrSet("ircNickname", randomName()))
+        serverPasswordField.textProperty().set(properties.get("ircServerPassword"))
         channelPasswordTextField.textProperty().set(properties.get("ircChannelPassword"))
+        encryptionTextField.textProperty().set(properties.get("ircEncryptionPassword"))
+        secureCheckBox.selectedProperty().set(properties.getOrSet("ircSecure", true))
+        portTextField.textProperty().set(properties.getOrSet("ircServerPort", 6665).toString())
+    }
+
+    private fun onOKButtonClick(stage: Stage) {
+        configuration = IRCNetworkConfig(
+            host = serverTextField.textProperty().get(),
+            chan = channelTextField.textProperty().get(),
+            nickName = nickTextField.textProperty().get(),
+            chanPassword = serverPasswordField.textProperty().get(),
+            serverPassword = channelPasswordTextField.textProperty().get(),
+            port = portTextField.text.toInt(),
+            secure = secureCheckBox.selectedProperty().get()
+        )
+        properties.set("ircServer", serverTextField.textProperty().get())
+        properties.set("ircServerPort", portTextField.textProperty().get().toInt())
+        properties.set("ircChannel", channelTextField.textProperty().get())
+        properties.set("ircNickname", nickTextField.textProperty().get())
+        properties.set("ircServerPassword", serverPasswordField.textProperty().get())
+        properties.set("ircChannelPassword", channelPasswordTextField.textProperty().get())
+        properties.set("ircSecure", secureCheckBox.selectedProperty().get())
+
+        stage.close()
     }
 
     private fun createStage(parent: Window): Stage {
@@ -128,6 +140,15 @@ class NetworkDialogController {
     }
 
     companion object {
+
+        private val head: List<Char> = ('A'..'Z').toList()
+        private val tail: List<Char> = ('a'..'z') + ('0'..'9')
+
+        private fun randomName() = head.random() +
+                (0 until Random.nextInt(6, 8))
+                    .map { tail.random() }
+                    .joinToString("")
+
         private val logger = LoggerFactory.getLogger(NetworkDialogController::class.java)
     }
 }

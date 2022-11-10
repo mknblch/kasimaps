@@ -32,6 +32,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
+data class StatusEvent(val statusText: String)
 
 @Component
 @FxmlResource("fxml/Map.fxml")
@@ -48,6 +49,9 @@ class MapController : Initializable {
 
     @Autowired
     private lateinit var properties: PersistentProperties
+
+    @Autowired
+    private lateinit var networkSyncService: NetworkSyncService
 
     @FXML
     private lateinit var parentPane: StackPane
@@ -151,16 +155,17 @@ class MapController : Initializable {
         lockWindowMenuItem.selectedProperty().addListener { _, _, v ->
             primaryStage.isAlwaysOnTop = v
         }
-        // hide while out of focus
+        // hide while out of focus toggle
         parentPane.hoverProperty().addListener { _, _, v ->
             menuBar.opacity = if (v) 1.0 else 0.0
             mapPane.setCursorHintOpaque(v)
         }
-        // cursor visibility
+        // cursor visibility toggle
         properties.bind("showCursorText", true, showCursorText.selectedProperty())
         showCursorText.selectedProperty().addListener { _, _, v ->
             mapPane.setCursorTextVisible(v)
         }
+        // chat waypoint toggle
         properties.bind("enableWaypoint", true, enableWaypoint.selectedProperty())
         enableWaypoint.selectedProperty().addListener { _, _, v ->
             mapPane.resetWaypoint()
@@ -171,11 +176,16 @@ class MapController : Initializable {
             mapPane.redraw()
             mapPane.setStatusText("Cursor scale: ${v.toInt()}%")
         }
-        properties.bind("sync", false, syncMenuItem.selectedProperty())
+
         syncMenuItem.selectedProperty().addListener { _, _, v ->
-            if (!v) return@addListener
-            val (_, networkDialogController) = loader.load(NetworkDialogController::class.java)
-            println(networkDialogController.show(primaryStage))
+            if (v) {
+                val (_, networkDialogController) = loader.load(NetworkDialogController::class.java)
+                networkDialogController.show(primaryStage)?.also(networkSyncService::connect) ?: kotlin.run {
+                    syncMenuItem.selectedProperty().set(false)
+                }
+            } else {
+                networkSyncService.disconnect()
+            }
         }
         when (properties.getOrSet("colorTransformer", "z")) {
             "z" -> zRadio.selectedProperty().set(true)
@@ -184,6 +194,14 @@ class MapController : Initializable {
         // draw
         mapPane.redraw()
     }
+
+    @EventListener
+    fun onStatusEvent(statusEvent: StatusEvent) {
+        Platform.runLater {
+            mapPane.setStatusText(statusEvent.statusText)
+        }
+    }
+
 
     @EventListener
     fun onMessageEvent(messageEvent: MessageEvent) {
@@ -231,6 +249,7 @@ class MapController : Initializable {
                 it.shortName, false
             )
         )
+        networkSyncService.setZone(it.shortName)
     }
 
     @EventListener

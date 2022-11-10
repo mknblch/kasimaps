@@ -12,6 +12,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import java.util.stream.Collectors
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 import kotlin.concurrent.scheduleAtFixedRate
@@ -24,7 +25,7 @@ class DirectoryWatcherService() {
     @Autowired
     private lateinit var applicationEventPublisher: ApplicationEventPublisher
 
-    private val activeParser: MutableMap<Path, EqlogEmitter> = HashMap()
+    private var activeParser: EqlogEmitter? = null
 
     private val timer = Timer()
 
@@ -38,29 +39,33 @@ class DirectoryWatcherService() {
             return@scheduleAtFixedRate
         }
         this@DirectoryWatcherService.eqDirectory = eqDirectory
-        Files.walk(Paths.get(eqDirectory.absolutePath, "/Logs/")).filter { it.isRegularFile() }.forEach {
-            val matchEntire = FILE_REGEX.matchEntire(it.fileName.toString()) ?: return@forEach
-            val character: String = matchEntire.groupValues[1]
-            val server: String = matchEntire.groupValues[2]
-            activeParser.computeIfAbsent(it) { path -> createParser(path, character, server) }
+        val files: MutableList<File> = Files.walk(Paths.get(eqDirectory.absolutePath, "/Logs/"))
+            .filter { it.isRegularFile() }
+            .map { it.toFile() }
+            .collect(Collectors.toList())
+
+        val newest = files.maxByOrNull { it.lastModified() } ?: return@scheduleAtFixedRate
+        val matchEntire = FILE_REGEX.matchEntire(newest.name) ?: return@scheduleAtFixedRate
+        val character: String = matchEntire.groupValues[1]
+        val server: String = matchEntire.groupValues[2]
+        if (activeParser?.file == newest) return@scheduleAtFixedRate
+        activeParser?.also {
+            logger.info("Closing Parser(character=${it.character}, server=${it.server})")
+            it.close()
         }
+        activeParser = createParser(newest, character, server)
     }
 
     @PreDestroy
     fun tearDown() {
         timerTask?.cancel()
         timer.cancel()
-        activeParser.values.forEach {
-            it.close()
-        }
+        activeParser?.close()
     }
 
     fun reset() {
         timerTask?.cancel()
-        activeParser.values.forEach {
-            it.close()
-        }
-        activeParser.clear()
+        activeParser?.close()
         eqDirectory?.let {
             timerTask = buildTimerTask(it)
         }
@@ -71,9 +76,9 @@ class DirectoryWatcherService() {
         timerTask = buildTimerTask(eqDirectory)
     }
 
-    private fun createParser(path: Path, character: String, server: String): EqlogEmitter {
+    private fun createParser(file: File, character: String, server: String): EqlogEmitter {
         logger.info("creating parser for $character on $server")
-        return EqlogEmitter(applicationEventPublisher, path, character, server)
+        return EqlogEmitter(applicationEventPublisher, file, character, server)
     }
 
     companion object {

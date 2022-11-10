@@ -4,15 +4,16 @@ import de.mknblch.eqmap.EqEvent
 import de.mknblch.eqmap.Origin
 import de.mknblch.eqmap.common.LogParser
 import org.springframework.context.ApplicationEventPublisher
+import java.io.File
 import java.nio.file.Path
 import java.time.Instant
 
 class EqlogEmitter(
     val applicationEventPublisher: ApplicationEventPublisher,
-    path: Path,
+    val file: File,
     val character: String,
     val server: String
-) : LogParser(path.toFile()) {
+) : LogParser(file) {
 
     override fun emit(value: String) {
         val matchResult: MatchResult = lineRegex.matchEntire(value) ?: return

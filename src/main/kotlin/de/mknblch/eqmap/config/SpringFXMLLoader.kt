@@ -33,7 +33,6 @@ class SpringFXMLLoader @Autowired constructor(
         with(loader) {
             controllerFactory = Callback { controller }
             resources = resourceBundle
-//            location = javaClass.classLoader.getResource(fxmlPath)
             loadListener = AutowiringLoadListener(beanFactory)
         }
         return Pair(loader.load(), controller)
@@ -53,73 +52,39 @@ class SpringFXMLLoader @Autowired constructor(
 
 class AutowiringLoadListener(private val beanFactory: AutowireCapableBeanFactory) : LoadListener {
 
-    override fun readImportProcessingInstruction(target: String?) {
-        logger.debug("readImportProcessingInstruction $target")
-    }
+    override fun readImportProcessingInstruction(target: String?) {}
 
-    override fun readLanguageProcessingInstruction(language: String?) {
-        logger.debug("readLanguageProcessingInstruction $language")
-    }
+    override fun readLanguageProcessingInstruction(language: String?) {}
 
-    override fun readComment(comment: String?) {
-        logger.debug("readComment $comment")
-    }
+    override fun readComment(comment: String?) {}
 
-    override fun beginInstanceDeclarationElement(type: Class<*>?) {
-        logger.debug("beginInstanceDeclarationElement ${type?.simpleName}")
-    }
+    override fun beginInstanceDeclarationElement(type: Class<*>?) {}
 
-    override fun beginUnknownTypeElement(name: String?) {
-        logger.debug("beginUnknownTypeElement $name")
-    }
+    override fun beginUnknownTypeElement(name: String?) {}
 
-    override fun beginIncludeElement() {
-        logger.debug("beginIncludeElement")
-    }
+    override fun beginIncludeElement() {}
 
-    override fun beginReferenceElement() {
-        logger.debug("beginReferenceElement")
-    }
+    override fun beginReferenceElement() {}
 
-    override fun beginCopyElement() {
-        logger.debug("beginCopyElement")
-    }
+    override fun beginCopyElement() {}
 
-    override fun beginRootElement() {
-        logger.debug("beginRootElement")
-    }
+    override fun beginRootElement() {}
 
-    override fun beginPropertyElement(name: String?, sourceType: Class<*>?) {
-        logger.debug("beginPropertyElement $name ${sourceType?.simpleName}")
-    }
+    override fun beginPropertyElement(name: String?, sourceType: Class<*>?) {}
 
-    override fun beginUnknownStaticPropertyElement(name: String?) {
-        logger.debug("beginUnknownStaticPropertyElement $name")
-    }
+    override fun beginUnknownStaticPropertyElement(name: String?) {}
 
-    override fun beginScriptElement() {
-        logger.debug("beginScriptElement")
-    }
+    override fun beginScriptElement() {}
 
-    override fun beginDefineElement() {
-        logger.debug("beginDefineElement")
-    }
+    override fun beginDefineElement() {}
 
-    override fun readInternalAttribute(name: String?, value: String?) {
-        logger.debug("readInternalAttribute $name $value")
-    }
+    override fun readInternalAttribute(name: String?, value: String?) {}
 
-    override fun readPropertyAttribute(name: String?, sourceType: Class<*>?, value: String?) {
-        logger.debug("readPropertyAttribute $name")
-    }
+    override fun readPropertyAttribute(name: String?, sourceType: Class<*>?, value: String?) {}
 
-    override fun readUnknownStaticPropertyAttribute(name: String?, value: String?) {
-        logger.debug("readUnknownStaticPropertyAttribute $name")
-    }
+    override fun readUnknownStaticPropertyAttribute(name: String?, value: String?) {}
 
-    override fun readEventHandlerAttribute(name: String?, value: String?) {
-        logger.debug("readEventHandlerAttribute $name")
-    }
+    override fun readEventHandlerAttribute(name: String?, value: String?) {}
 
     override fun endElement(value: Any) {
         val objectId = System.identityHashCode(value).toString(16)
