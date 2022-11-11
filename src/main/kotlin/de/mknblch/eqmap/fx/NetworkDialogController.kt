@@ -22,6 +22,10 @@ import kotlin.random.Random
 @FxmlResource("fxml/NetworkDialog.fxml")
 class NetworkDialogController {
 
+    fun String?.nullIfBlank(): String? {
+        return if (this.isNullOrBlank()) null else this
+    }
+
     @Autowired
     private lateinit var properties: PersistentProperties
 
@@ -97,20 +101,20 @@ class NetworkDialogController {
 
     private fun onOKButtonClick(stage: Stage) {
         configuration = IRCNetworkConfig(
-            host = serverTextField.textProperty().get(),
-            chan = channelTextField.textProperty().get(),
-            nickName = nickTextField.textProperty().get(),
-            chanPassword = serverPasswordField.textProperty().get(),
-            serverPassword = channelPasswordTextField.textProperty().get(),
+            host = serverTextField.text,
+            chan = channelTextField.text,
+            nickName = nickTextField.text,
+            chanPassword = serverPasswordField.text,
             port = portTextField.text.toInt(),
-            secure = secureCheckBox.selectedProperty().get()
+            encryptionPassword = encryptionTextField.text.nullIfBlank()
         )
         properties.set("ircServer", serverTextField.textProperty().get())
         properties.set("ircServerPort", portTextField.textProperty().get().toInt())
         properties.set("ircChannel", channelTextField.textProperty().get())
         properties.set("ircNickname", nickTextField.textProperty().get())
-        properties.set("ircServerPassword", serverPasswordField.textProperty().get())
-        properties.set("ircChannelPassword", channelPasswordTextField.textProperty().get())
+        properties.set("ircServerPassword", serverPasswordField.textProperty().get().nullIfBlank())
+        properties.set("ircChannelPassword", channelPasswordTextField.textProperty().get().nullIfBlank())
+        properties.set("ircEncryptionPassword", encryptionTextField.textProperty().get().nullIfBlank())
         properties.set("ircSecure", secureCheckBox.selectedProperty().get())
 
         stage.close()

@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<DialogPane fx:id="dialogPane" prefHeight="298.0" prefWidth="292.0" xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.mknblch.eqmap.fx.NetworkDialogController">
+<DialogPane fx:id="dialogPane" prefHeight="244.0" prefWidth="295.0" xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1" fx:controller="de.mknblch.eqmap.fx.NetworkDialogController">
     <content>
         <GridPane alignment="TOP_CENTER" prefHeight="208.0" prefWidth="368.0">
 
@@ -25,25 +25,12 @@
                         <Insets bottom="5.0" top="5.0" />
                     </padding>
                 </Label>
-                <Label text="Server Password" GridPane.rowIndex="6">
-                    <padding>
-                        <Insets bottom="5.0" top="5.0" />
-                    </padding>
-                </Label>
-                <Label text="Channel Password" GridPane.rowIndex="7">
+                <Label text="Channel Password" GridPane.rowIndex="6">
                     <padding>
                         <Insets bottom="5.0" top="5.0" />
                     </padding>
                 </Label>
                 <Label text="Port" GridPane.rowIndex="1">
-                    <padding>
-                        <Insets bottom="5.0" top="5.0" />
-                    </padding>
-                </Label>
-                <Label text="TLS" GridPane.rowIndex="8">
-                    <GridPane.margin>
-                        <Insets />
-                    </GridPane.margin>
                     <padding>
                         <Insets bottom="5.0" top="5.0" />
                     </padding>
@@ -57,13 +44,7 @@
                 <TextField fx:id="channelTextField" prefColumnCount="1" GridPane.columnIndex="2" GridPane.rowIndex="2" />
                 <TextField fx:id="nickTextField" GridPane.columnIndex="2" GridPane.rowIndex="3" />
                 <TextField fx:id="portTextField" prefColumnCount="1" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                <CheckBox fx:id="secureCheckBox" selected="true" GridPane.columnIndex="2" GridPane.rowIndex="8">
-                    <GridPane.margin>
-                        <Insets left="5.0" />
-                    </GridPane.margin>
-                </CheckBox>
-                <TextField fx:id="serverPasswordField" GridPane.columnIndex="2" GridPane.rowIndex="6" />
-                <TextField fx:id="channelPasswordTextField" GridPane.columnIndex="2" GridPane.rowIndex="7" />
+                <TextField fx:id="channelPasswordTextField" GridPane.columnIndex="2" GridPane.rowIndex="6" />
 
 
                 <TextField fx:id="encryptionTextField" prefColumnCount="1" GridPane.columnIndex="2" GridPane.rowIndex="5" />
@@ -75,8 +56,6 @@
                 <ColumnConstraints maxWidth="264.0" minWidth="138.0" prefWidth="138.0" />
             </columnConstraints>
             <rowConstraints>
-                <RowConstraints />
-                <RowConstraints />
                 <RowConstraints />
                 <RowConstraints />
                 <RowConstraints />
