@@ -1,11 +1,13 @@
 package de.mknblch.eqmap.config
 
 import de.mknblch.eqmap.StatusEvent
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import net.engio.mbassy.listener.Handler
 import org.kitteh.irc.client.library.Client
 import org.kitteh.irc.client.library.Client.Builder.Server.SecurityType.INSECURE
-import org.kitteh.irc.client.library.Client.Builder.Server.SecurityType.SECURE
+import org.kitteh.irc.client.library.defaults.element.mode.DefaultChannelMode
+import org.kitteh.irc.client.library.element.mode.ChannelMode
+import org.kitteh.irc.client.library.element.mode.Mode
+import org.kitteh.irc.client.library.element.mode.ModeStatus
 import org.kitteh.irc.client.library.event.channel.ChannelMessageEvent
 import org.kitteh.irc.client.library.event.channel.RequestedChannelJoinCompleteEvent
 import org.slf4j.LoggerFactory
@@ -13,12 +15,8 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import java.math.BigInteger
-import java.security.KeyStore
 import java.security.MessageDigest
-import java.security.Provider
-import java.security.cert.X509Certificate
 import javax.annotation.PreDestroy
-import javax.net.ssl.*
 import kotlin.text.Charsets.UTF_8
 
 
@@ -53,6 +51,11 @@ class NetworkSyncService(
             .port(config.port, INSECURE)
             .then()
             .nick(config.nickName)
+            .listeners()
+            .input(this::onInMessage)
+            .output(this::onOutMessage)
+            .exception(this::onException)
+            .then()
             .buildAndConnect()
             .also { c ->
                 c.eventManager.registerEventListener(this)
@@ -64,6 +67,10 @@ class NetworkSyncService(
     private fun onJoin(event: RequestedChannelJoinCompleteEvent) {
         if (zone == null) return
         val message = "${event.actor.nick} joined ${event.channel.name}"
+        config?.chanPassword?.also {
+            logger.info("setting channel password $it")
+            event.channel.commands().mode().add(ModeStatus.Action.ADD, DefaultChannelMode(client!!, 'k', ChannelMode.Type.C_PARAMETER_ON_SET), it).execute()
+        }
         logger.info(message)
         publisher.publishEvent(StatusEvent(message))
     }
@@ -71,7 +78,7 @@ class NetworkSyncService(
 
     @Handler
     private fun onIrcMessage(event: ChannelMessageEvent) {
-        if (zone == null) return
+//        if (zone == null) return
 //        if (event.client.nick == event.actor.nick) return
         logger.info(event.toString())
         val message = encoder?.decrypt(event.message) ?: return
@@ -80,6 +87,18 @@ class NetworkSyncService(
 
     fun disconnect() {
         client?.shutdown("exit")
+    }
+
+    private fun onOutMessage(message: String) {
+        logger.info("out: $message")
+    }
+
+    private fun onInMessage(message: String) {
+        logger.info("in: $message")
+    }
+
+    private fun onException(e: Exception) {
+        logger.error("IRC Error", e)
     }
 
     @EventListener

@@ -39,16 +39,10 @@ class NetworkDialogController {
     private lateinit var portTextField: TextField
 
     @FXML
-    private lateinit var secureCheckBox: CheckBox
-
-    @FXML
     private lateinit var channelTextField: TextField
 
     @FXML
     private lateinit var nickTextField: TextField
-
-    @FXML
-    private lateinit var serverPasswordField: TextField
 
     @FXML
     private lateinit var channelPasswordTextField: TextField
@@ -92,10 +86,8 @@ class NetworkDialogController {
         serverTextField.textProperty().set(properties.getOrSet("ircServer", "irc.quakenet.org"))
         channelTextField.textProperty().set(properties.getOrSet("ircChannel", "#everquest"))
         nickTextField.textProperty().set(properties.getOrSet("ircNickname", randomName()))
-        serverPasswordField.textProperty().set(properties.get("ircServerPassword"))
         channelPasswordTextField.textProperty().set(properties.get("ircChannelPassword"))
         encryptionTextField.textProperty().set(properties.get("ircEncryptionPassword"))
-        secureCheckBox.selectedProperty().set(properties.getOrSet("ircSecure", true))
         portTextField.textProperty().set(properties.getOrSet("ircServerPort", 6665).toString())
     }
 
@@ -104,7 +96,7 @@ class NetworkDialogController {
             host = serverTextField.text,
             chan = channelTextField.text,
             nickName = nickTextField.text,
-            chanPassword = serverPasswordField.text,
+            chanPassword = channelPasswordTextField.text,
             port = portTextField.text.toInt(),
             encryptionPassword = encryptionTextField.text.nullIfBlank()
         )
@@ -112,10 +104,8 @@ class NetworkDialogController {
         properties.set("ircServerPort", portTextField.textProperty().get().toInt())
         properties.set("ircChannel", channelTextField.textProperty().get())
         properties.set("ircNickname", nickTextField.textProperty().get())
-        properties.set("ircServerPassword", serverPasswordField.textProperty().get().nullIfBlank())
         properties.set("ircChannelPassword", channelPasswordTextField.textProperty().get().nullIfBlank())
         properties.set("ircEncryptionPassword", encryptionTextField.textProperty().get().nullIfBlank())
-        properties.set("ircSecure", secureCheckBox.selectedProperty().get())
 
         stage.close()
     }
