@@ -78,9 +78,9 @@ class MapPane : StackPane() {
         cursor.sizeProperty.bind(strokeWidthProperty)
         waypoint.scaleProperty.bind(strokeWidthProperty)
         cursorColor.addListener { _, _, v ->
-            if (v != null) cursor.fill = v
+            if (v != null) setCursorColor(v)
         }
-        cursor.fill = cursorColor.get()
+        setCursorColor(cursorColor.get())
         showPoiProperty.addListener { _, _, _ ->
             redraw()
         }
@@ -124,6 +124,10 @@ class MapPane : StackPane() {
 
     fun setCursorColor(color: Color) {
         cursor.fill = color
+        val deriveColor = color.deriveColor(0.5, 1.0, 1.0, 1.0)
+        ircPlayerMap.forEach {
+            it.value.color = deriveColor
+        }
     }
 
     fun setMapContent(map: ZoneMap) = synchronized(this) {
@@ -332,7 +336,12 @@ class MapPane : StackPane() {
     }
 
     private fun onClick(mouseEvent: MouseEvent) {
-        if (mouseEvent.button == MouseButton.SECONDARY) {
+        if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isAltDown) {
+            val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
+            setIrcPlayerMarker("test", local.x, local.y)
+        }
+        else
+            if (mouseEvent.button == MouseButton.SECONDARY) {
             val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
 //            val parent = mouseEvent.pickResult.intersectedNode.parent
 //            if (parent is WaypointMarker || parent is POI) return

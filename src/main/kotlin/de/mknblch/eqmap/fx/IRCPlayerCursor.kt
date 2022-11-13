@@ -5,7 +5,6 @@ import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
 import javafx.scene.Group
 import javafx.scene.effect.Lighting
-import kotlin.jvm.JvmOverloads
 import javafx.scene.paint.Color
 import javafx.scene.shape.LineTo
 import javafx.scene.shape.MoveTo
@@ -19,16 +18,16 @@ import kotlin.math.sqrt
 
 class IRCPlayerCursor @JvmOverloads constructor(
     val name: String,
-    var x: Double,
-    var y: Double,
-    var size: Double = 10.0,
-    val color: Color,
+    var x1: Double,
+    var y1: Double,
+    var size: Double = 12.0,
+    var color: Color,
     val path: Path = Path(),
     val text: Text = Text(10.0, 0.0, name )
 ) : Group(path, text) {
 
-    protected var x2: Double = x
-    protected var y2: Double = y + size
+    protected var x2: Double = x1
+    protected var y2: Double = y1 + size
     private val fadeStart = 1.0
     private val fadeOut = 0.1
     val sizeProperty: SimpleDoubleProperty = SimpleDoubleProperty(size)
@@ -44,10 +43,8 @@ class IRCPlayerCursor @JvmOverloads constructor(
         scaleProperty.addListener { _, _, _ ->
             draw()
         }
-        path.fill = color
+
         path.stroke = Color.TRANSPARENT
-        text.stroke = color
-        text.fill = color
         effect = Lighting()
     }
 
@@ -55,10 +52,11 @@ class IRCPlayerCursor @JvmOverloads constructor(
         if (position.x == x2 && y2 == position.y) {
             return
         }
-        x = x2
-        y = y2
+        x1 = x2
+        y1 = y2
         x2 = position.x
         y2 = position.y
+        this.opacity = 1.0
         draw()
         this.translateX = x2
         this.translateY = y2
@@ -66,9 +64,12 @@ class IRCPlayerCursor @JvmOverloads constructor(
     }
 
     fun draw() {
+        path.fill = color
+        text.stroke = color
+        text.fill = color
         path.elements.clear()
         path.elements.add(MoveTo(0.0, 0.0))
-        val angle = atan2(y2 - y, x2 - x) - Math.PI / 2.0
+        val angle = atan2(y2 - y1, x2 - x1) - Math.PI / 2.0
         val sin = sin(angle)
         val cos = cos(angle)
         val s = sizeProperty.get().coerceAtLeast(1.0) * size * scaleProperty.get()

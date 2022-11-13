@@ -36,6 +36,11 @@
 - `Click on POI` to cycle through the names
 - Since locations on wiki mostly miss the Z part the p99 POI data will be visible regardless of your current position
 
+#### Multiplayer Map Synchronization
+
+- `App -> Synchronization` activates Sync over IRC
+- TODO
+
 ![](doc/Animation4.gif)
 ![](doc/Animation.gif)
 ![](doc/Animation2.gif)
