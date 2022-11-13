@@ -18,6 +18,8 @@ import javax.annotation.PreDestroy
 import kotlin.concurrent.scheduleAtFixedRate
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
+import kotlin.jvm.optionals.getOrElse
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 class DirectoryWatcherService() {
@@ -33,18 +35,19 @@ class DirectoryWatcherService() {
 
     private var eqDirectory: File? = null
 
-    private fun buildTimerTask(eqDirectory: File) = timer.scheduleAtFixedRate(0, 5_000L) {
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun buildTimerTask(eqDirectory: File) = timer.scheduleAtFixedRate(0, 3_000L) {
         if (!Paths.get(eqDirectory.absolutePath, "/Logs/").exists()) {
             logger.warn("eq_directory '${eqDirectory.absolutePath}/Logs/' not found!")
             return@scheduleAtFixedRate
         }
         this@DirectoryWatcherService.eqDirectory = eqDirectory
-        val files: MutableList<File> = Files.walk(Paths.get(eqDirectory.absolutePath, "/Logs/"))
+        val newest = Files.list(Paths.get(eqDirectory.absolutePath, "/Logs/"))
             .filter { it.isRegularFile() }
             .map { it.toFile() }
-            .collect(Collectors.toList())
+            .max(Comparator.comparing { it.lastModified() })
+            .getOrNull() ?: return@scheduleAtFixedRate
 
-        val newest = files.maxByOrNull { it.lastModified() } ?: return@scheduleAtFixedRate
         val matchEntire = FILE_REGEX.matchEntire(newest.name) ?: return@scheduleAtFixedRate
         val character: String = matchEntire.groupValues[1]
         val server: String = matchEntire.groupValues[2]

@@ -1,12 +1,13 @@
 package de.mknblch.eqmap.config
 
+import de.mknblch.eqmap.IRCLocationEvent
+import de.mknblch.eqmap.IRCZoneEvent
 import de.mknblch.eqmap.StatusEvent
 import net.engio.mbassy.listener.Handler
 import org.kitteh.irc.client.library.Client
 import org.kitteh.irc.client.library.Client.Builder.Server.SecurityType.INSECURE
 import org.kitteh.irc.client.library.defaults.element.mode.DefaultChannelMode
 import org.kitteh.irc.client.library.element.mode.ChannelMode
-import org.kitteh.irc.client.library.element.mode.Mode
 import org.kitteh.irc.client.library.element.mode.ModeStatus
 import org.kitteh.irc.client.library.event.channel.ChannelMessageEvent
 import org.kitteh.irc.client.library.event.channel.RequestedChannelJoinCompleteEvent
@@ -75,14 +76,30 @@ class NetworkSyncService(
         publisher.publishEvent(StatusEvent(message))
     }
 
+    //  L,Ngram,freportn,229,49,3
+    private val messageRegex = Regex("([A-Z]),([^,]+),([^,]+),([^,]+),([^,]+)")
 
     @Handler
     private fun onIrcMessage(event: ChannelMessageEvent) {
-//        if (zone == null) return
-//        if (event.client.nick == event.actor.nick) return
         logger.info(event.toString())
         val message = encoder?.decrypt(event.message) ?: return
-        logger.info("Message from ${event.actor.nick}: $message")
+        val event = try {
+            val data = message.split(",")
+            when {
+                data[0] == "L" -> IRCLocationEvent(
+                    data[1],
+                    data[2],
+                    data[3].toDouble(),
+                    data[4].toDouble(),
+                    data[5].toDouble()
+                )
+                data[0] == "Z" -> IRCZoneEvent(data[1], data[2])
+                else -> return
+            }
+        } catch (e: Exception) {
+            logger.warn("invalid IRC message: $message")
+        }
+        publisher.publishEvent(event)
     }
 
     fun disconnect() {

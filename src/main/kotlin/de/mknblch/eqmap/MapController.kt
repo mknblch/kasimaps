@@ -3,7 +3,6 @@ package de.mknblch.eqmap
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.common.ZColorTransformer
-import de.mknblch.eqmap.common.withAlpha
 import de.mknblch.eqmap.config.*
 import de.mknblch.eqmap.fx.*
 import de.mknblch.eqmap.fx.BlackWhiteChooser
@@ -11,7 +10,6 @@ import de.mknblch.eqmap.fx.ColorChooser
 import de.mknblch.eqmap.zone.LayerComparator
 import de.mknblch.eqmap.zone.ZoneMap
 import javafx.application.Platform
-import javafx.beans.property.*
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
@@ -21,7 +19,6 @@ import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -202,9 +199,31 @@ class MapController : Initializable {
         }
     }
 
+    @EventListener
+    fun onIrcLocationEvent(ircLocationEvent: IRCLocationEvent) {
+        // only track events of current zone
+        if (mapPane.getMapShortName() != ircLocationEvent.zone) return
+        Platform.runLater {
+            mapPane.setIrcPlayerMarker(
+                ircLocationEvent.player,
+                ircLocationEvent.x,
+                ircLocationEvent.y
+            )
+        }
+    }
 
     @EventListener
-    fun onMessageEvent(messageEvent: MessageEvent) {
+    fun onIrcZoneEvent(ircZoneEvent: IRCZoneEvent) {
+        // only track events of palyers leaving the current zone
+        if (mapPane.getMapShortName() == ircZoneEvent.zone) return
+        Platform.runLater {
+            mapPane.removeIrcPlayerMarker(ircZoneEvent.player)
+        }
+    }
+
+
+    @EventListener
+    fun onMessageEvent(messageEvent: GameMessageEvent) {
         if(!enableWaypoint.selectedProperty().get()) return
         pingRegex.matchEntire(messageEvent.text.trim())?.run {
             onPing(

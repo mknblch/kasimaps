@@ -17,7 +17,6 @@ import javafx.scene.layout.Border
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
-import javafx.scene.shape.Circle
 import javafx.scene.shape.Line
 import javafx.scene.text.Text
 import org.slf4j.LoggerFactory
@@ -100,6 +99,29 @@ class MapPane : StackPane() {
         }
     }
 
+    private val ircPlayerMap: MutableMap<String, IRCPlayerCursor> = mutableMapOf()
+
+    fun setIrcPlayerMarker(name: String, x: Double, y: Double) {
+        val c = ircPlayerMap.computeIfAbsent(name) { n ->
+            IRCPlayerCursor(n, x, y, 8.0, Color.ORANGERED).also {
+                it.sizeProperty.bind(strokeWidthProperty)
+                it.scaleProperty.bind(cursor.scaleProperty)
+                group.children.add(it)
+            }
+        }
+        val position = Point2D(x, y)
+        c.setPos(position)
+        redraw()
+        locationPing(position, false)
+    }
+
+    fun removeIrcPlayerMarker(name: String) {
+        ircPlayerMap.remove(name)?.also {
+            group.children.remove(it)
+        }
+        redraw()
+    }
+
     fun setCursorColor(color: Color) {
         cursor.fill = color
     }
@@ -107,6 +129,7 @@ class MapPane : StackPane() {
     fun setMapContent(map: ZoneMap) = synchronized(this) {
         logger.debug("loading zone ${map.name}")
         cursor.isVisible = false
+        ircPlayerMap.clear()
         waypoint.reset()
         this.map = map
         children.clear()

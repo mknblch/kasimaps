@@ -25,7 +25,7 @@ abstract class LogParser(val logfile: File) : AutoCloseable {
         }
     }
 
-    private suspend fun readLoop() {
+    private fun readLoop() {
         var chr: Int
         var cr = false
         val builder = StringBuffer()
@@ -42,7 +42,7 @@ abstract class LogParser(val logfile: File) : AutoCloseable {
             when {
                 // wait for input
                 chr == -1 -> {
-                    delay(1)
+                    Thread.sleep(1)
                     continue@Loop
                 }
                 // emit complete sentence

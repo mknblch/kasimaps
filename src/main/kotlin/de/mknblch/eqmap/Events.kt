@@ -15,4 +15,25 @@ data class EqEvent(
     val character: String? = null,
     val server: String? = null)
 
-interface GameEvent
+enum class Type(val regex: Regex) {
+    SAY(Regex("^([^ ]+) says '(.+)'")),
+    TELL(Regex("([^ ]+) tells you, '(.+)'")),
+    GROUP(Regex("([^ ]+) tells the group, '(.+)'")),
+    GUILD(Regex("([^ ]+) tells the guild, '(.+)'")),
+    OOC(Regex("([^ ]+) says out of character, '(.+)'"));
+}
+
+data class GameMessageEvent(val type: Type, val to: String, val from: String, val text: String)
+
+data class IRCLocationEvent(
+    val player: String,
+    val zone: String,
+    val x: Double,
+    val y: Double,
+    val z: Double
+)
+
+data class IRCZoneEvent(
+    val player: String,
+    val zone: String,
+)

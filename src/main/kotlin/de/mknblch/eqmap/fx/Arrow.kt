@@ -1,4 +1,4 @@
-package de.mknblch.eqmap.zone
+package de.mknblch.eqmap.fx
 
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
@@ -13,15 +13,15 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-class Arrow @JvmOverloads constructor(
+open class Arrow @JvmOverloads constructor(
     var x1: Double,
     var y1: Double,
     var size: Double = 10.0,
     val color: Color
 ) : Path() {
 
-    private var x2: Double = x1
-    private var y2: Double = y1 + size
+    protected var x2: Double = x1
+    protected var y2: Double = y1 + size
 
     val sizeProperty: SimpleDoubleProperty = SimpleDoubleProperty(size)
 
@@ -42,7 +42,7 @@ class Arrow @JvmOverloads constructor(
         draw()
     }
 
-    private fun draw() {
+    protected open fun draw() {
         elements.clear()
         elements.add(MoveTo(x2, y2))
         val angle = atan2(y2 - y1, x2 - x1) - Math.PI / 2.0
