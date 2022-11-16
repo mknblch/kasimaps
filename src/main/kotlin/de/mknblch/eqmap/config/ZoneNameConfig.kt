@@ -37,4 +37,19 @@ class ZoneNameConfig {
             Pair(it.value, it.key)
         }.toMap()
 
+    @Qualifier("whoMapping")
+    @Bean
+    fun whoMapping(): Map<String, String> {
+
+        val zoneMapping = zoneMapping()
+
+        val whoMapping = InputStreamReader(mapKeysWho.inputStream).readLines().mapNotNull {
+            val groups = regex.matchEntire(it)?.groupValues ?: return@mapNotNull null
+            Pair(groups[1].trim(), groups[2].trim())
+        }.toMap().mapValues {
+            zoneMapping[it.value] ?: it.value
+        }
+
+        return zoneMapping + whoMapping
+    }
 }

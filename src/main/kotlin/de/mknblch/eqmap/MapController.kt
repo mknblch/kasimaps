@@ -170,7 +170,6 @@ class MapController : Initializable {
         properties.bind("cursorScale", 1.0, cursorScaleSlider.valueProperty())
         mapPane.cursor.scaleProperty.bind(cursorScaleSlider.valueProperty().divide(100.0))
         cursorScaleSlider.valueProperty().addListener { _, _, v ->
-            mapPane.redraw()
             mapPane.setStatusText("Cursor scale: ${v.toInt()}%")
         }
 
@@ -249,6 +248,18 @@ class MapController : Initializable {
         }
     }
 
+
+    @EventListener
+    fun onWhoEvent(e: WhoEvent) {
+        zones.firstOrNull { it.shortName.equals(e.zone, true) }?.also {
+            Platform.runLater {
+                switchZone(it)
+            }
+        } ?: kotlin.run {
+            logger.error("no mapping for zone '${e.zone}' found in ${zones.map { it.name }}")
+        }
+    }
+
     private fun onPing(type: Type, from: String, to: String, zoneName: String, y: String, x: String) {
         if (from == to || from == "You") return // ignore yourself
         if (mapPane.getMapShortName() != zoneName) return // only if current zone
@@ -261,6 +272,9 @@ class MapController : Initializable {
     }
 
     private fun switchZone(it: ZoneMap) {
+        if (mapPane.getMapShortName() == it.shortName) {
+            return
+        }
         mapPane.setMapContent(it)
         populateLayerMenu(it)
         zLayerCheckMenuItem.selectedProperty().set(

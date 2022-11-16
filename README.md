@@ -39,7 +39,9 @@
 #### Multiplayer Map Synchronization
 
 - `App -> Synchronization` activates Sync over IRC
-- TODO
+- once connected the client will try to set the channel password
+- people using the same encryption password share their positions among each other
+- only location messages on the active map are processed and shown 
 
 ![](doc/Animation4.gif)
 ![](doc/Animation.gif)

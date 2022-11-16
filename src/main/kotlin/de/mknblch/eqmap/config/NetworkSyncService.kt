@@ -66,22 +66,17 @@ class NetworkSyncService(
 
     @Handler
     private fun onJoin(event: RequestedChannelJoinCompleteEvent) {
-        if (zone == null) return
-        val message = "${event.actor.nick} joined ${event.channel.name}"
         config?.chanPassword?.also {
             logger.info("setting channel password $it")
             event.channel.commands().mode().add(ModeStatus.Action.ADD, DefaultChannelMode(client!!, 'k', ChannelMode.Type.C_PARAMETER_ON_SET), it).execute()
         }
+        val message = "${event.actor.nick} joined ${event.channel.name}"
         logger.info(message)
         publisher.publishEvent(StatusEvent(message))
     }
 
-    //  L,Ngram,freportn,229,49,3
-    private val messageRegex = Regex("([A-Z]),([^,]+),([^,]+),([^,]+),([^,]+)")
-
     @Handler
     private fun onIrcMessage(event: ChannelMessageEvent) {
-        logger.info(event.toString())
         val message = encoder?.decrypt(event.message) ?: return
         val event = try {
             val data = message.split(",")
@@ -99,6 +94,7 @@ class NetworkSyncService(
         } catch (e: Exception) {
             logger.warn("invalid IRC message: $message")
         }
+//        logger.debug(event.toString())
         publisher.publishEvent(event)
     }
 

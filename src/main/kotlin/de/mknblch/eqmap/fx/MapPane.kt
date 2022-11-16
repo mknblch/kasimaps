@@ -3,6 +3,7 @@ package de.mknblch.eqmap.fx
 import de.mknblch.eqmap.common.ColorTransformer
 import de.mknblch.eqmap.common.OriginalTransformer
 import de.mknblch.eqmap.common.withAlpha
+import de.mknblch.eqmap.fx.marker.*
 import de.mknblch.eqmap.zone.*
 import javafx.beans.property.*
 import javafx.collections.FXCollections
@@ -54,7 +55,8 @@ class MapPane : StackPane() {
     private val strokeWidthProperty = SimpleDoubleProperty(1.0)
     private val clipboard = Clipboard.getSystemClipboard()
 
-    val cursor = Arrow(0.0, 0.0, 14.0, Color.WHITE)
+    val cursor = PlayerCursor()
+//    val cursor = Arrow(0.0, 0.0, 14.0, Color.WHITE)
 
     val zViewDistance: DoubleProperty = SimpleDoubleProperty(35.0)
 
@@ -75,7 +77,7 @@ class MapPane : StackPane() {
 
     @PostConstruct
     fun init() {
-        cursor.sizeProperty.bind(strokeWidthProperty)
+        cursor.zoomProperty.bind(strokeWidthProperty)
         waypoint.scaleProperty.bind(strokeWidthProperty)
         cursorColor.addListener { _, _, v ->
             if (v != null) setCursorColor(v)
@@ -100,12 +102,14 @@ class MapPane : StackPane() {
     }
 
     private val ircPlayerMap: MutableMap<String, IRCPlayerCursor> = mutableMapOf()
+    private val cursorColorProperty: SimpleObjectProperty<Color> = SimpleObjectProperty(Color.WHITE)
 
     fun setIrcPlayerMarker(name: String, x: Double, y: Double) {
         val c = ircPlayerMap.computeIfAbsent(name) { n ->
-            IRCPlayerCursor(n, x, y, 8.0, Color.ORANGERED).also {
-                it.sizeProperty.bind(strokeWidthProperty)
-                it.scaleProperty.bind(cursor.scaleProperty)
+            IRCPlayerCursor(n).also {
+                it.zoomProperty.bind(strokeWidthProperty)
+                it.scaleProperty.bind(cursor.scaleProperty) // TODO
+                it.colorProperty.bind(cursorColorProperty)
                 group.children.add(it)
             }
         }
@@ -123,15 +127,14 @@ class MapPane : StackPane() {
     }
 
     fun setCursorColor(color: Color) {
-        cursor.fill = color
-        val deriveColor = color.deriveColor(0.5, 1.0, 1.0, 1.0)
-        ircPlayerMap.forEach {
-            it.value.color = deriveColor
-        }
+        cursor.colorProperty.set(color)
+        val deriveColor = color.deriveColor(20.0, 1.0, 1.0, 1.0)
+        cursorColorProperty.set(deriveColor)
     }
 
     fun setMapContent(map: ZoneMap) = synchronized(this) {
         logger.debug("loading zone ${map.name}")
+        strokeWidthProperty.set(1.0)
         cursor.isVisible = false
         ircPlayerMap.clear()
         waypoint.reset()
@@ -175,10 +178,11 @@ class MapPane : StackPane() {
     fun moveCursor(x: Double, y: Double, z: Double) {
         if (!this::group.isInitialized) return
         cursor.isVisible = true
-        cursor.setPos(Point2D(x, y))
-        if (centerPlayerCursor.get()) centerPoint(group.localToParent(cursor.getPosition()))
+        val position = Point2D(x, y)
+        cursor.setPos(position)
+        if (centerPlayerCursor.get()) centerPoint(group.localToParent(position))
         if (useZLayerViewDistance[map.shortName] == true) drawZLayer(z)
-        locationPing(Point2D(x, y))
+        locationPing(position)
     }
 
     fun deriveColor(newColor: Color) {
@@ -336,12 +340,16 @@ class MapPane : StackPane() {
     }
 
     private fun onClick(mouseEvent: MouseEvent) {
-        if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isAltDown) {
+        if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isControlDown) {
             val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
-            setIrcPlayerMarker("test", local.x, local.y)
+            moveCursor(local.x, local.y, zOrdinate.get())
+        }
+        else if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isAltDown) {
+            val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
+            setIrcPlayerMarker(listOf("Hackman", "Slarti", "Norrix").random(), local.x, local.y)
         }
         else
-            if (mouseEvent.button == MouseButton.SECONDARY) {
+        if (mouseEvent.button == MouseButton.SECONDARY) {
             val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
 //            val parent = mouseEvent.pickResult.intersectedNode.parent
 //            if (parent is WaypointMarker || parent is POI) return
@@ -424,7 +432,6 @@ class MapPane : StackPane() {
         ) * 0.75
         val value = max(f, group.scaleY + (group.scaleY * v))
         statusLabel.setStatusText("Zoom: ${(value * 100).toInt()}%")
-        logger.debug("zooming into $localBeforeScroll by ${(value * 100).toInt()}%")
         group.scaleX = value
         group.scaleY = value
         val clickInParent = group.localToParent(localBeforeScroll)
