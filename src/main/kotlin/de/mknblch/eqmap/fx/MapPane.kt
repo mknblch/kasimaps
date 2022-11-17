@@ -20,6 +20,7 @@ import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Line
 import javafx.scene.text.Text
+import javafx.scene.transform.Scale
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
@@ -228,7 +229,7 @@ class MapPane : StackPane() {
                 return@forEach
             }
             // hide POI if switched off
-            if ((node is MapPOI3D || node is MapPOI2D) && !showPoiProperty.get()) {
+            if ((node is MapPOI) && !showPoiProperty.get()) {
                 node.setShow(false)
                 return@forEach
             }
@@ -325,8 +326,7 @@ class MapPane : StackPane() {
         setCursorHintColor(inverted)
         map.elements.forEach { node ->
             // increase stroke width when zooming out
-            (node as? MapPOI3D)?.text?.stroke = inverted
-            (node as? MapPOI2D)?.text?.stroke = inverted
+            (node as? MapPOI)?.text?.stroke = inverted
         }
     }
 
@@ -351,8 +351,8 @@ class MapPane : StackPane() {
         else
         if (mouseEvent.button == MouseButton.SECONDARY) {
             val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
-//            val parent = mouseEvent.pickResult.intersectedNode.parent
-//            if (parent is WaypointMarker || parent is POI) return
+            val parent = mouseEvent.pickResult.intersectedNode.parent
+            if (parent is WaypointMarker) return
             showCopyPing(local)
             clipboard.setContent(ClipboardContent().also {
                 val formatPing = formatPing(local, mouseEvent.target)
@@ -435,6 +435,7 @@ class MapPane : StackPane() {
         group.scaleX = value
         group.scaleY = value
         val clickInParent = group.localToParent(localBeforeScroll)
+        println(clickInParent)
         // center target point at mouse pointer
         translateTo(clickInParent, mousePoint)
     }

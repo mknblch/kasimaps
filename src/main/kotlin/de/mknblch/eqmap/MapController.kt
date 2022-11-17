@@ -5,16 +5,17 @@ import de.mknblch.eqmap.common.PersistentProperties
 import de.mknblch.eqmap.common.ZColorTransformer
 import de.mknblch.eqmap.config.*
 import de.mknblch.eqmap.fx.*
-import de.mknblch.eqmap.fx.BlackWhiteChooser
-import de.mknblch.eqmap.fx.ColorChooser
 import de.mknblch.eqmap.zone.LayerComparator
+import de.mknblch.eqmap.zone.MapPOI
 import de.mknblch.eqmap.zone.ZoneMap
 import javafx.application.Platform
+import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
-import javafx.scene.layout.*
+import javafx.scene.input.MouseEvent
+import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
@@ -226,7 +227,7 @@ class MapController : Initializable {
 
     @EventListener
     fun onMessageEvent(messageEvent: GameMessageEvent) {
-        if(!enableWaypoint.selectedProperty().get()) return
+        if (!enableWaypoint.selectedProperty().get()) return
         pingRegex.matchEntire(messageEvent.text.trim())?.run {
             onPing(
                 messageEvent.type,
@@ -280,6 +281,7 @@ class MapController : Initializable {
         }
         mapPane.setMapContent(it)
         populateLayerMenu(it)
+        populateFindMenu(it)
         setZLayerMenuItem(it)
 
         networkSyncService.setZone(it.shortName)
@@ -349,7 +351,15 @@ class MapController : Initializable {
 
     private fun populateFindMenu(map: ZoneMap) {
         findMenu.items.clear()
-        map.layer.flatMap { it.nodes }
+        map.layer.flatMap { it.nodes }.filterIsInstance<MapPOI>().flatMap { poi ->
+            poi.names.map { Pair(poi, it) }
+        }.sortedBy { it.second }.forEach {
+            val menuItem = MenuItem(it.second)
+            menuItem.addEventHandler(ActionEvent.ACTION) { _ ->
+                mapPane.userPing(it.first.x, it.first.y, it.second)
+            }
+            findMenu.items.add(menuItem)
+        }
     }
 
     private fun registerMenuBarClickListener(primaryStage: Stage) {

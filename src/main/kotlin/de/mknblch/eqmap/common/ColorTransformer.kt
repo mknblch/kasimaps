@@ -3,7 +3,7 @@ package de.mknblch.eqmap.common
 import de.mknblch.eqmap.common.ColorTransformer.Companion.generatePalette
 import de.mknblch.eqmap.zone.MapLine
 import de.mknblch.eqmap.zone.MapNode
-import de.mknblch.eqmap.zone.POI
+import de.mknblch.eqmap.zone.MapPOI
 import javafx.scene.paint.Color
 import kotlin.math.min
 
@@ -75,7 +75,7 @@ class POIDeriveColorTransformer(val color: Color) : ColorTransformer {
 
     override fun apply(objects: Collection<MapNode>) {
         objects.forEach { node ->
-            if (node is POI) {
+            if (node is MapPOI) {
                 node.getViewColor()?.also {
                     node.setViewColor(
                         it.deriveColor(color.hue, color.saturation, color.brightness, color.opacity)

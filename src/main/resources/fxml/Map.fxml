@@ -12,7 +12,7 @@
                 <items>
                     <CustomCheckMenuItem fx:id="lockWindowMenuItem" mnemonicParsing="false" text="Lock Window" />
                     <CustomCheckMenuItem fx:id="syncMenuItem" mnemonicParsing="false" text="Synchronization" />
-                    <CustomCheckMenuItem fx:id="enableWaypoint" mnemonicParsing="false" selected="true" text="Enable Waypoints" />
+                    <CustomCheckMenuItem fx:id="enableWaypoint" mnemonicParsing="false" selected="true" text="InGame Waypoints" />
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <MenuItem fx:id="resetMenuItem" mnemonicParsing="false" text="Reset" />
                     <SeparatorMenuItem mnemonicParsing="false" />
@@ -20,19 +20,20 @@
                 </items>
             </Menu>
             <Menu fx:id="zoneMenu" mnemonicParsing="false" styleClass="custom-context-menu" text="Zone" />
-            <Menu mnemonicParsing="false" text="POI">
-                <items>
-                    <CustomCheckMenuItem fx:id="showPoi" mnemonicParsing="false" selected="true" text="Show POI" />
-               <Menu fx:id="findMenu" mnemonicParsing="false" text="Find" />
-                    <SeparatorMenuItem mnemonicParsing="false" />
-                    <Menu fx:id="poiLayerMenu" mnemonicParsing="false" text="Layer" />
-                </items>
-            </Menu>
+         <Menu fx:id="findMenu" mnemonicParsing="false" text="Find" />
             <Menu fx:id="optionsMenu" mnemonicParsing="false" text="Options">
                 <items>
                     <CustomCheckMenuItem fx:id="zLayerCheckMenuItem" mnemonicParsing="false" text="Filter Z-Axis" />
                     <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
                     <CustomCheckMenuItem fx:id="showCursorText" mnemonicParsing="false" selected="false" text="Cursor Position" />
+               <SeparatorMenuItem mnemonicParsing="false" />
+                  <Menu mnemonicParsing="false" text="POI">
+                      <items>
+                          <CustomCheckMenuItem fx:id="showPoi" mnemonicParsing="false" selected="true" text="Show POI" />
+                          <SeparatorMenuItem mnemonicParsing="false" />
+                          <Menu fx:id="poiLayerMenu" mnemonicParsing="false" text="Layer" />
+                      </items>
+                  </Menu>
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <Menu mnemonicParsing="false" text="Foreground">
                         <items>
@@ -53,7 +54,7 @@
                         <items>
                      <CustomMenuItem mnemonicParsing="false" text="Unspecified Action">
                         <content>
-                           <Slider fx:id="alphaSlider" blockIncrement="1.0" max="255.0" min="1.0" showTickMarks="true" snapToTicks="true" />
+                           <Slider fx:id="alphaSlider" blockIncrement="1.0" max="255.0" min="1.0" />
                         </content>
                      </CustomMenuItem>
                             <CustomMenuItem hideOnClick="false" mnemonicParsing="false" text="Unspecified Action">

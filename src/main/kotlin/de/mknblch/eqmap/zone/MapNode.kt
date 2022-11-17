@@ -33,8 +33,8 @@ interface MapNode {
             return try {
                 when (head) {
                     "L" -> MapLine.buildFromLine(*line)
-                    "P" -> MapPOI3D.buildFromString(*line)
-                    "K" -> MapPOI2D.buildFromString(*line)
+                    "P" -> MapPOI.build3DFromString(*line)
+                    "K" -> MapPOI.build2DFromString(*line)
                     "#" -> null // skip
                     else -> throw IllegalArgumentException("invalid header '$head'")
                 }

@@ -4,13 +4,11 @@ import de.mknblch.eqmap.common.withAlpha
 import javafx.animation.Transition
 import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Point2D
-import javafx.scene.effect.Lighting
 import javafx.scene.paint.Color
 import javafx.util.Duration
-import kotlin.math.sqrt
 
 class IRCPlayerCursor(name: String) : CustomTextMarker(
-    name = name,
+    initialTextValue = name,
     path = "M 149.996,0 C 67.157,0 0.001,67.161 0.001,149.997 0.001,232.833 67.157,300 149.996,300 232.835,300 299.999,232.837 " +
             "299.999,149.997 299.999,67.157 232.835,0 149.996,0 Z M 208.8,94.181 170.703,201.654 c -0.322,0.908 -1.118,1.561 " +
             "-2.067,1.699 -0.967,0.132 -1.904,-0.259 -2.469,-1.032 l -19.346,-26.434 -31.981,31.979 c -0.506,0.506 -1.17,0.76 " +

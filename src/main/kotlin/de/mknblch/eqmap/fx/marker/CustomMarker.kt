@@ -13,7 +13,8 @@ open class CustomMarker(
     private val angle: Double = 0.0,
     scaling: Double = 1.0,
     xOffset: Double = 0.0,
-    yOffset: Double = 0.0
+    yOffset: Double = 0.0,
+    val autoRotate: Boolean = true
 ) : Group() {
 
     val scaleProperty: SimpleDoubleProperty = SimpleDoubleProperty(1.0)
@@ -32,9 +33,12 @@ open class CustomMarker(
         // default invisible
         isVisible = false
         // container properties
+//        isFocusTraversable = false
         isMouseTransparent = true
-        isPickOnBounds = false
-        isManaged = false
+//        isPickOnBounds = false
+//        isManaged = false
+        svgPath.isMouseTransparent = true
+//        svgPath.isManaged = false
         // create path
         svgPath.content = path
         svgPath.fillRule = FillRule.NON_ZERO
@@ -63,7 +67,7 @@ open class CustomMarker(
     fun moveTo(x: Double, y: Double) {
         isVisible = true
         if (x == x0 && y == y0) return
-        svgPath.rotate = atan2(y0 - y, x0 - x) * 180.0 / Math.PI - angle
+        if (autoRotate) svgPath.rotate = atan2(y0 - y, x0 - x) * 180.0 / Math.PI - angle
         translateX = x
         translateY = y
         x0 = x
