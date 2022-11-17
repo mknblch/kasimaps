@@ -66,6 +66,9 @@ class MapController : Initializable {
     private lateinit var poiLayerMenu: Menu
 
     @FXML
+    private lateinit var findMenu: Menu
+
+    @FXML
     private lateinit var menuBar: MenuBar
 
     @FXML
@@ -277,12 +280,17 @@ class MapController : Initializable {
         }
         mapPane.setMapContent(it)
         populateLayerMenu(it)
+        setZLayerMenuItem(it)
+
+        networkSyncService.setZone(it.shortName)
+    }
+
+    private fun setZLayerMenuItem(it: ZoneMap) {
         zLayerCheckMenuItem.selectedProperty().set(
             properties.getMap<Boolean>("useZLayerViewDistance").getOrDefault(
                 it.shortName, false
             )
         )
-        networkSyncService.setZone(it.shortName)
     }
 
     @EventListener
@@ -337,6 +345,11 @@ class MapController : Initializable {
             }
             poiLayerMenu.items.add(checkMenuItem)
         }
+    }
+
+    private fun populateFindMenu(map: ZoneMap) {
+        findMenu.items.clear()
+        map.layer.flatMap { it.nodes }
     }
 
     private fun registerMenuBarClickListener(primaryStage: Stage) {
