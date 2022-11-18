@@ -27,13 +27,8 @@
                     <CustomCheckMenuItem fx:id="centerCheckMenuItem" mnemonicParsing="false" selected="true" text="Center Player" />
                     <CustomCheckMenuItem fx:id="showCursorText" mnemonicParsing="false" selected="false" text="Cursor Position" />
                <SeparatorMenuItem mnemonicParsing="false" />
-                  <Menu mnemonicParsing="false" text="POI">
-                      <items>
-                          <CustomCheckMenuItem fx:id="showPoi" mnemonicParsing="false" selected="true" text="Show POI" />
-                          <SeparatorMenuItem mnemonicParsing="false" />
-                          <Menu fx:id="poiLayerMenu" mnemonicParsing="false" text="Layer" />
-                      </items>
-                  </Menu>
+                    <CustomCheckMenuItem fx:id="showPoi" mnemonicParsing="false" selected="true" text="Show POI" />
+                    <Menu fx:id="poiLayerMenu" mnemonicParsing="false" text="Layer" />
                     <SeparatorMenuItem mnemonicParsing="false" />
                     <Menu mnemonicParsing="false" text="Foreground">
                         <items>

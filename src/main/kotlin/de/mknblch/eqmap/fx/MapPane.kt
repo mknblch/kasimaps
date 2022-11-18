@@ -147,13 +147,11 @@ class MapPane : StackPane() {
         children.add(copyPing)
         children.add(statusLabel)
         StackPane.setAlignment(statusLabel, Pos.BOTTOM_LEFT)
-        layout()
         redraw()
         resetColor(colorTransformer)
         deriveColor(falseColor.get())
         centerMap()
         zoomToBounds()
-        layout()
         setBackgroundColor(backgroundColor.get())
         setStatusText("load ${map.name.capitalize()}")
     }
@@ -219,6 +217,7 @@ class MapPane : StackPane() {
         map.layer.forEach { layer ->
             redrawLayer(layer)
         }
+        layout()
     }
 
     private fun redrawLayer(layer: MapLayer) {
@@ -353,15 +352,15 @@ class MapPane : StackPane() {
     }
 
     private fun onClick(mouseEvent: MouseEvent) {
-        if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isControlDown) {
-            val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
-            moveCursor(local.x, local.y, zOrdinate.get())
-        }
-        else if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isAltDown) {
-            val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
-            setIrcPlayerMarker(listOf("Hackman", "Slarti", "Norrix").random(), local.x, local.y)
-        }
-        else
+//        if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isControlDown) {
+//            val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
+//            moveCursor(local.x, local.y, zOrdinate.get())
+//        }
+//        else if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isAltDown) {
+//            val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
+//            setIrcPlayerMarker(listOf("Hackman", "Slarti", "Norrix").random(), local.x, local.y)
+//        }
+//        else
         if (mouseEvent.button == MouseButton.SECONDARY) {
             val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
             val parent = mouseEvent.pickResult.intersectedNode.parent
@@ -463,9 +462,6 @@ class MapPane : StackPane() {
         val d = (1.0 / value)
         strokeWidthProperty.set(d)
         statusLabel.setStatusText("Zoom: ${(value * 100).toInt()}%")
-
-        logger.info("scale value: $value")
-        logger.info("d: $d")
     }
 
     fun setCursorTextVisible(v: Boolean) {
@@ -485,9 +481,7 @@ class MapPane : StackPane() {
         if (!map.pointInBounds(x, y)) return
         logger.debug("setting waypoint to $x, $y")
         waypoint.setWaypoint(x, y, from)
-
         centerPoint(mapToLayout(Point2D(x, y)))
-
         statusLabel.setStatusText("new waypoint from $from")
     }
 
