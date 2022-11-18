@@ -20,7 +20,6 @@ import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Line
 import javafx.scene.text.Text
-import javafx.scene.transform.Scale
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
@@ -37,8 +36,8 @@ class MapPane : StackPane() {
 
     private lateinit var map: ZoneMap
     private lateinit var group: Group
+    private lateinit var scaleGroup: Group
     private lateinit var enclosure: Pane
-
     private var mouseAnchorX: Double = 0.0
     private var mouseAnchorY: Double = 0.0
     private var initialTranslateX: Double = 0.0
@@ -55,6 +54,8 @@ class MapPane : StackPane() {
     private val statusLabel = StatusText()
     private val strokeWidthProperty = SimpleDoubleProperty(1.0)
     private val clipboard = Clipboard.getSystemClipboard()
+    private val ircPlayerMap: MutableMap<String, IRCPlayerCursor> = mutableMapOf()
+    private val cursorColorProperty: SimpleObjectProperty<Color> = SimpleObjectProperty(Color.WHITE)
 
     val cursor = PlayerCursor()
 //    val cursor = Arrow(0.0, 0.0, 14.0, Color.WHITE)
@@ -102,8 +103,6 @@ class MapPane : StackPane() {
         }
     }
 
-    private val ircPlayerMap: MutableMap<String, IRCPlayerCursor> = mutableMapOf()
-    private val cursorColorProperty: SimpleObjectProperty<Color> = SimpleObjectProperty(Color.WHITE)
 
     fun setIrcPlayerMarker(name: String, x: Double, y: Double) {
         val c = ircPlayerMap.computeIfAbsent(name) { n ->
@@ -134,13 +133,14 @@ class MapPane : StackPane() {
     }
 
     fun setMapContent(map: ZoneMap) = synchronized(this) {
+        // unload
+        unloadCurrent()
         logger.debug("loading zone ${map.name}")
         strokeWidthProperty.set(1.0)
         cursor.isVisible = false
         ircPlayerMap.clear()
         waypoint.reset()
         this.map = map
-        children.clear()
         children.add(prepare(map))
         children.add(cursorHint)
         children.add(locationPing)
@@ -173,7 +173,7 @@ class MapPane : StackPane() {
         if (!this::map.isInitialized) return
         val bounds = group.boundsInLocal
         val centerInLocal = Point2D(bounds.width / 2 + bounds.minX, bounds.height / 2 + bounds.minY)
-        centerPoint(group.localToParent(centerInLocal))
+        centerPoint(mapToLayout(centerInLocal))
     }
 
     fun moveCursor(x: Double, y: Double, z: Double) {
@@ -181,7 +181,7 @@ class MapPane : StackPane() {
         cursor.isVisible = true
         val position = Point2D(x, y)
         cursor.setPos(position)
-        if (centerPlayerCursor.get()) centerPoint(group.localToParent(position))
+        if (centerPlayerCursor.get()) centerPoint(mapToLayout(position))
         if (useZLayerViewDistance[map.shortName] == true) drawZLayer(z)
         locationPing(position)
     }
@@ -257,15 +257,13 @@ class MapPane : StackPane() {
     }
 
     private fun prepare(map: ZoneMap): Node {
-        // unload
-        unloadCurrent()
         // group map & cursor
         group = Group(*map.toTypedArray(), cursor, waypoint)
-
+        scaleGroup = Group(group)
         // register properties on elements
         registerNodeProperties()
         // background for moving and scaling
-        enclosure = Pane(group)
+        enclosure = Pane(scaleGroup)
 
         with(enclosure) {
             // properties
@@ -298,10 +296,21 @@ class MapPane : StackPane() {
     }
 
     private fun onMouseMoved(mouseEvent: MouseEvent) {
-        val b = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
+        val point2D = Point2D(mouseEvent.x, mouseEvent.y)
+        val b = layoutToMap(point2D)
         cursorHint.text = "( ${-b.y.roundToInt()} x ${-b.x.roundToInt()} )"
         setCursorHintPosition(mouseEvent)
     }
+
+    /**
+     * parent to local
+     */
+    private fun layoutToMap(point2D: Point2D) = group.parentToLocal(scaleGroup.parentToLocal(point2D))
+
+    /**
+     * local to parent
+     */
+    private fun mapToLayout(point2D: Point2D) = scaleGroup.localToParent(group.localToParent(point2D))
 
     private fun registerNodeProperties() {
         map.elements.forEach { node ->
@@ -331,8 +340,12 @@ class MapPane : StackPane() {
     }
 
     private fun unloadCurrent() {
+        children.clear()
         if (this::group.isInitialized) {
             group.children.clear()
+        }
+        if (this::scaleGroup.isInitialized) {
+            scaleGroup.children.clear()
         }
         if (this::enclosure.isInitialized) {
             enclosure.children.clear()
@@ -341,16 +354,16 @@ class MapPane : StackPane() {
 
     private fun onClick(mouseEvent: MouseEvent) {
         if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isControlDown) {
-            val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
+            val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
             moveCursor(local.x, local.y, zOrdinate.get())
         }
         else if (mouseEvent.button == MouseButton.SECONDARY && mouseEvent.isAltDown) {
-            val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
+            val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
             setIrcPlayerMarker(listOf("Hackman", "Slarti", "Norrix").random(), local.x, local.y)
         }
         else
         if (mouseEvent.button == MouseButton.SECONDARY) {
-            val local = group.parentToLocal(Point2D(mouseEvent.x, mouseEvent.y))
+            val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
             val parent = mouseEvent.pickResult.intersectedNode.parent
             if (parent is WaypointMarker) return
             showCopyPing(local)
@@ -368,7 +381,7 @@ class MapPane : StackPane() {
     }
 
     fun locationPing(point: Point2D, centerAtPing: Boolean = false) {
-        val parent = group.localToParent(point)
+        val parent = mapToLayout(point)
         locationPing.ping(parent.x, parent.y)
         if (centerAtPing) {
             centerPoint(parent)
@@ -376,7 +389,7 @@ class MapPane : StackPane() {
     }
 
     fun showCopyPing(point: Point2D) {
-        val parent = group.localToParent(point)
+        val parent = mapToLayout(point)
         copyPing.ping(parent.x, parent.y)
     }
 
@@ -412,8 +425,6 @@ class MapPane : StackPane() {
             changeZAxis(wheelDelta)
         } else {
             zoomAt(Point2D(event.x, event.y), v)
-            // adapt stroke width when zooming
-            strokeWidthProperty.set((1.0 / group.scaleY))
         }
     }
 
@@ -424,30 +435,37 @@ class MapPane : StackPane() {
     }
 
     private fun zoomAt(mousePoint: Point2D, v: Double) {
-        val localBeforeScroll = group.parentToLocal(mousePoint)
+        val localBeforeScroll = scaleGroup.parentToLocal(mousePoint)
         // adapt scale
         val f = min(
             width / group.boundsInLocal.width,
             height / group.boundsInLocal.height
         ) * 0.75
-        val value = max(f, group.scaleY + (group.scaleY * v))
-        statusLabel.setStatusText("Zoom: ${(value * 100).toInt()}%")
-        group.scaleX = value
-        group.scaleY = value
-        val clickInParent = group.localToParent(localBeforeScroll)
-        println(clickInParent)
+        val value = max(f, scaleGroup.scaleY + (scaleGroup.scaleY * v))
+//        val value = scaleGroup.scaleY + (scaleGroup.scaleY * v)
+        setScale(value)
+        val clickInParent = scaleGroup.localToParent(localBeforeScroll)
         // center target point at mouse pointer
         translateTo(clickInParent, mousePoint)
     }
 
     fun zoomToBounds() {
-        val f = min(
+        val value = min(
             width / group.boundsInLocal.width,
             height / group.boundsInLocal.height
         ) * 0.90
-        group.scaleX = f
-        group.scaleY = f
-        strokeWidthProperty.set((1.0 / group.scaleY))
+        setScale(value)
+    }
+
+    fun setScale(value: Double) {
+        scaleGroup.scaleX = value
+        scaleGroup.scaleY = value
+        val d = (1.0 / value)
+        strokeWidthProperty.set(d)
+        statusLabel.setStatusText("Zoom: ${(value * 100).toInt()}%")
+
+        logger.info("scale value: $value")
+        logger.info("d: $d")
     }
 
     fun setCursorTextVisible(v: Boolean) {
@@ -467,7 +485,9 @@ class MapPane : StackPane() {
         if (!map.pointInBounds(x, y)) return
         logger.debug("setting waypoint to $x, $y")
         waypoint.setWaypoint(x, y, from)
-        centerPoint(group.localToParent(Point2D(x, y)))
+
+        centerPoint(mapToLayout(Point2D(x, y)))
+
         statusLabel.setStatusText("new waypoint from $from")
     }
 
