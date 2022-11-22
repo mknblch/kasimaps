@@ -14,6 +14,6 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build windows
-        run: mvn --batch-mode --update-snapshots -p windows clean compile package
+        run: mvn --batch-mode --update-snapshots -P windows clean compile package
       - name: Build linux
-        run: mvn --batch-mode --update-snapshots -p linux clean compile package
+        run: mvn --batch-mode --update-snapshots -P linux clean compile package
