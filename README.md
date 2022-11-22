@@ -1,11 +1,18 @@
 # JavaFX based map for [p1999-Everquest](https://www.project1999.com/)
 
+![example workflow](https://github.com/mknblch/kasimaps/actions/workflows/build.yml/badge.svg)
+
 ### Installation
 
 - install [Java](https://openjdk.org/) 
-- download the [windows](https://github.com/mknblch/kasimaps/tree/develop/dist/snapshot/Kasimaps.jar) or [linux](https://github.com/mknblch/kasimaps/tree/develop/dist/snapshot/Kasimaps_lnx.jar) version
-- run using `java -jar Kasimaps.jar` or `start.bat` 
-- **_config.json_ from previous versions must be removed or the app won't start**
+- download the [windows](https://github.com/mknblch/kasimaps/tree/develop/target/Kasimaps.jar) or [linux](https://github.com/mknblch/kasimaps/tree/develop/target/Kasimaps_lnx.jar) version
+- run using `java -jar Kasimaps.jar` or create a clickable file like `start.bat` with:
+    ```  
+    @echo off
+    java -jar Kasimaps.jar
+    ```
+
+- **_config.json_ from previous versions must be removed or the app won't start!**
 
 ### Features
 

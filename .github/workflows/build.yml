@@ -22,18 +22,15 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          ls -la ./dist
-          ls -la ./target
           git add ./target/Kasimaps.jar
           git commit -am "Add windows distribution"
           git push
-#      - name: Build linux
-#        run: mvn --batch-mode --update-snapshots -P linux clean compile package
-#      - name: Commit & Push files
-#        run: |
-#          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-#          git config --local user.name "github-actions[bot]"
-#          ls -la ./target
-#          git add ./target/kasimaps_lnx.jar
-#          git commit -am "Add linux distribution"
-#          git push
+      - name: Build linux
+        run: mvn --batch-mode --update-snapshots -Plinux,!windows clean compile package
+      - name: Commit & Push linux
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add ./target/Kasimaps_lnx.jar
+          git commit -am "Add linux distribution"
+          git push
