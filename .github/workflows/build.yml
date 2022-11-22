@@ -26,13 +26,10 @@ jobs:
         run: mvn --batch-mode --update-snapshots -P windows clean compile package
       - name: Build linux
         run: mvn --batch-mode --update-snapshots -P linux clean compile package
-      - name: Commit files
+      - name: Commit & Push files
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git commit -a -m "Add changes"
-      - name: Push changes
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git add ~/eqmap/dist
+          git commit -am "Add changes"
           git push
