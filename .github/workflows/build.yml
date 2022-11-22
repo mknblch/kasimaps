@@ -1,0 +1,19 @@
+name: Java CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Build windows
+        run: mvn --batch-mode --update-snapshots -p windows clean compile package
+      - name: Build linux
+        run: mvn --batch-mode --update-snapshots -p linux clean compile package
