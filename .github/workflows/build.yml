@@ -17,11 +17,12 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build windows
-        run: mvn --batch-mode --update-snapshots -P windows clean compile package
+        run: mvn --batch-mode --update-snapshots -Pwindows clean compile package
       - name: Commit & Push windows
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+          ls -la ./dist
           ls -la ./target
           git add ./target/kasimaps.jar
           git commit -am "Add windows distribution"
