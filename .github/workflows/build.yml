@@ -16,21 +16,15 @@ jobs:
         with:
           java-version: '11'
           distribution: 'adopt'
-      - name: Build windows
-        run: mvn --batch-mode --update-snapshots -Pwindows,!linux clean compile package
-      - name: Commit & Push windows
+      - name: Build
         run: |
+          mvn --batch-mode --update-snapshots -Pwindows,!linux clean compile package
+          cp -rf ./target/Kasimaps.jar .dist/
+          mvn --batch-mode --update-snapshots -Plinux,!windows clean compile package
+          cp -rf ./target/Kasimaps_lnx.jar ./dist
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add ./target/Kasimaps.jar
-          git commit -am "Add windows distribution"
-          git push
-      - name: Build linux
-        run: mvn --batch-mode --update-snapshots -Plinux,!windows clean compile package
-      - name: Commit & Push linux
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add ./target/Kasimaps_lnx.jar
-          git commit -am "Add linux distribution"
+          git add ./dist/Kasimaps.jar
+          git add ./dist/Kasimaps_lnx.jar
+          git commit -am "automatic build"
           git push

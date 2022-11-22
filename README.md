@@ -5,7 +5,7 @@
 ### Installation
 
 - install [Java](https://openjdk.org/) 
-- download the [windows](https://github.com/mknblch/kasimaps/tree/develop/target/Kasimaps.jar) or [linux](https://github.com/mknblch/kasimaps/tree/develop/target/Kasimaps_lnx.jar) version
+- download the [windows](https://github.com/mknblch/kasimaps/tree/develop/dist/Kasimaps.jar) or [linux](https://github.com/mknblch/kasimaps/tree/develop/dist/Kasimaps_lnx.jar) version
 - run using `java -jar Kasimaps.jar` or create a clickable file like `start.bat` with:
     ```  
     @echo off
