@@ -17,7 +17,7 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build windows
-        run: mvn --batch-mode --update-snapshots -Pwindows clean compile package
+        run: mvn --batch-mode --update-snapshots -Pwindows,!linux clean compile package
       - name: Commit & Push windows
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
