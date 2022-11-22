@@ -16,22 +16,23 @@ jobs:
         with:
           java-version: '11'
           distribution: 'adopt'
-      - name: Cache Maven packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
       - name: Build windows
         run: mvn --batch-mode --update-snapshots -P windows clean compile package
-      - name: Build linux
-        run: mvn --batch-mode --update-snapshots -P linux clean compile package
-      - name: Commit & Push files
+      - name: Commit & Push windows
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           ls -la ./target
           git add ./target/kasimaps.jar
-          git add ./target/kasimaps_lnx.jar
-          git commit -am "Add changes"
+          git commit -am "Add windows distribution"
           git push
+#      - name: Build linux
+#        run: mvn --batch-mode --update-snapshots -P linux clean compile package
+#      - name: Commit & Push files
+#        run: |
+#          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+#          git config --local user.name "github-actions[bot]"
+#          ls -la ./target
+#          git add ./target/kasimaps_lnx.jar
+#          git commit -am "Add linux distribution"
+#          git push
