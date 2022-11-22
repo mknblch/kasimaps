@@ -18,6 +18,7 @@ jobs:
           distribution: 'adopt'
       - name: Build
         run: |
+          mkdir -p dist
           mvn --batch-mode --update-snapshots -Pwindows,!linux clean compile package
           cp -rf ./target/Kasimaps.jar .dist/
           mvn --batch-mode --update-snapshots -Plinux,!windows clean compile package
