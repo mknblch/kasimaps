@@ -19,10 +19,9 @@ jobs:
       - name: Build
         run: |
           mvn --batch-mode --update-snapshots -Pwindows,!linux clean compile package
-          ls -la
-          cp -rf ./target/Kasimaps.jar .dist/
+          cp -rf ./target/Kasimaps.jar ./dist/Kasimaps.jar
           mvn --batch-mode --update-snapshots -Plinux,!windows clean compile package
-          cp -rf ./target/Kasimaps_lnx.jar ./dist
+          cp -rf ./target/Kasimaps_lnx.jar ./dist/Kasimaps_lnx.jar
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add ./dist/Kasimaps.jar
