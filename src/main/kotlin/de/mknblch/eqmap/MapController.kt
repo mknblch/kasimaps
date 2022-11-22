@@ -12,9 +12,9 @@ import javafx.application.Platform
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
+import javafx.geometry.Point2D
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
-import javafx.scene.input.MouseEvent
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.stage.Stage
@@ -352,11 +352,28 @@ class MapController : Initializable {
     private fun populateFindMenu(map: ZoneMap) {
         findMenu.items.clear()
         map.layer.flatMap { it.nodes }.filterIsInstance<MapPOI>().flatMap { poi ->
-            poi.names.map { Pair(poi, it) }
-        }.sortedBy { it.second }.forEach {
-            val menuItem = MenuItem(it.second)
+            poi.names.map { Pair(it, poi) }
+        }.groupBy { it.first }.toSortedMap().forEach { entry ->
+            val poiList = entry.value
+            val name = entry.key + if(poiList.size > 1) "(${poiList.size})" else ""
+            val menuItem = MenuItem(name)
             menuItem.addEventHandler(ActionEvent.ACTION) { _ ->
-                mapPane.userPing(it.first.x, it.first.y, it.second)
+                mapPane.resetFindMarker()
+                poiList.forEach { pair ->
+                    mapPane.setFindMarker(
+                        x = pair.second.x,
+                        y = pair.second.y,
+                        name = entry.key
+                    )
+                }
+                poiList.firstOrNull()?.also {
+                    mapPane.centerPoint(
+                        mapPane.mapToLayout(Point2D(
+                            it.second.x,
+                            it.second.y
+                        ))
+                    )
+                }
             }
             findMenu.items.add(menuItem)
         }

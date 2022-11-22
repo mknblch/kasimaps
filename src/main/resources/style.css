@@ -40,7 +40,21 @@
 
 .waypoint: hover {
     -fx-view-order: -1.0;
-    -fx-effect: innershadow(gaussian, red, 2, 2, 0, 0);
+    -fx-effect: innershadow(gaussian, firebrick, 2, 2, 0, 0);
+    -fx-strikethrough: true;
+}
+
+.findMarker {
+    -fx-view-order: 0.0;
+    -fx-effect: none;
+    -fx-stroke: lime;
+    -fx-fill: lime;
+    -fx-strikethrough: false;
+}
+
+.findMarker: hover {
+    -fx-view-order: -1.0;
+    -fx-effect: innershadow(gaussian, firebrick, 2, 2, 0, 0);
     -fx-strikethrough: true;
 }
 

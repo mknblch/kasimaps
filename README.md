@@ -10,11 +10,11 @@
 ### Features
 
 - on first start you will be asked for the Everquest root directory (not _/Logs_ !)
-- the program monitors Everquests `/log` directory and reacts to `/location` commands or zone-change
+- the program monitors Everquests `/log` directory and reacts to `/location` & `/who` commands and zone change 
 - this behaviour can be activated using in-game command `/log on` or set as default in the ini-file
 - the current map can be switched using the menu
-- on zone-change or login the map should change automatically
-- zone-data is taken from [nparse](https://github.com/nomns/nparse) and [wiki](https://wiki.project1999.com) (*99)
+- on zone-change, login or `/who` the map should change automatically
+- zone-data is taken from [nparse](https://github.com/nomns/nparse) <3 and [wiki](https://wiki.project1999.com) (*99)
 
 
 #### Map explorer
@@ -28,12 +28,14 @@
 - `right click` copies the current position to clipboard
 - the position can be pasted directly into in-game chat (/say, /tell, /group, /ooc) 
 - when the parser reads the position in chat it creates a single waypoint marker
+- the `Find` menu lists all known POI on the current map
+- Find-Markers can be individually removed using `left click` or completely removed using `right click` 
 
 #### p99 Zone-Data
 
 - Map data taken from P1999 Wiki 10/2022
 - POIs have been grouped and merged by distance
-- `Click on POI` to cycle through the names
+- use `Options -> POI` to enable/disable each layer individually
 - Since locations on wiki mostly miss the Z part the p99 POI data will be visible regardless of your current position
 
 #### Multiplayer Map Synchronization
@@ -41,11 +43,16 @@
 - `App -> Synchronization` activates Sync over IRC
 - once connected the client will try to set the channel password
 - people using the same encryption password share their positions among each other
+- even without a password the whole communication is encrypted
 - only location messages on the active map are processed and shown 
+
+#### Screenshots
 
 ![](doc/Animation4.gif)
 ![](doc/Animation.gif)
 ![](doc/Animation2.gif)
 ![](doc/Animation5.gif)
+![](doc/AnimationMultiplayer.gif)
+![](doc/AnimationFind.gif)
 
 <a href="https://www.flaticon.com/free-icons/dragon" title="dragon icons">Dragon icons created by Icongeek26 - Flaticon</a>

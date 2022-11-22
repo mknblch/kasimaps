@@ -245,7 +245,7 @@ class MapPane : StackPane() {
         }
     }
 
-    private fun centerPoint(point: Point2D) {
+    fun centerPoint(point: Point2D) {
         group.translateX += (enclosure.width / 2) - point.x
         group.translateY += (enclosure.height / 2) - point.y
     }
@@ -304,12 +304,12 @@ class MapPane : StackPane() {
     /**
      * parent to local
      */
-    private fun layoutToMap(point2D: Point2D) = group.parentToLocal(scaleGroup.parentToLocal(point2D))
+    fun layoutToMap(point2D: Point2D) = group.parentToLocal(scaleGroup.parentToLocal(point2D))
 
     /**
      * local to parent
      */
-    private fun mapToLayout(point2D: Point2D) = scaleGroup.localToParent(group.localToParent(point2D))
+    fun mapToLayout(point2D: Point2D) = scaleGroup.localToParent(group.localToParent(point2D))
 
     private fun registerNodeProperties() {
         map.elements.forEach { node ->
@@ -364,7 +364,7 @@ class MapPane : StackPane() {
         if (mouseEvent.button == MouseButton.SECONDARY) {
             val local = layoutToMap(Point2D(mouseEvent.x, mouseEvent.y))
             val parent = mouseEvent.pickResult.intersectedNode.parent
-            if (parent is WaypointMarker) return
+            if (parent is WaypointMarker || parent is FindMarker) return
             showCopyPing(local)
             clipboard.setContent(ClipboardContent().also {
                 val formatPing = formatPing(local, mouseEvent.target)
@@ -483,6 +483,32 @@ class MapPane : StackPane() {
         waypoint.setWaypoint(x, y, from)
         centerPoint(mapToLayout(Point2D(x, y)))
         statusLabel.setStatusText("new waypoint from $from")
+    }
+
+    fun resetFindMarker() {
+        val x = group.translateX
+        val y = group.translateY
+        group.children.removeIf {
+            it is FindMarker
+        }
+        group.translateX = x
+        group.translateY = y
+//        zoomToBounds()
+//        centerMap()
+    }
+
+    fun setFindMarker(x: Double, y: Double, name: String): FindMarker? {
+        if (!this::map.isInitialized) return null
+        if (!map.pointInBounds(x, y)) return null
+        val findMarker = object : FindMarker() {
+            override fun onRemoveClick(mouseEvent: MouseEvent) {
+                resetFindMarker()
+            }
+        }
+        findMarker.scaleProperty.bind(strokeWidthProperty)
+        group.children.add(findMarker)
+        findMarker.setWaypoint(x, y, name)
+        return findMarker
     }
 
     fun resetWaypoint() {
