@@ -24,7 +24,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           ls -la ./dist
           ls -la ./target
-          git add ./target/kasimaps.jar
+          git add ./target/Kasimaps.jar
           git commit -am "Add windows distribution"
           git push
 #      - name: Build linux
