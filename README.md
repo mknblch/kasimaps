@@ -16,7 +16,7 @@
 
 ### Features
 
-- on first start you will be asked for the Everquest root directory (not _/Logs_ !)
+- on first start you will be asked for the Everquest-Logs directory
 - the program monitors Everquests `/log` directory and reacts to `/location` & `/who` commands and zone change 
 - this behaviour can be activated using in-game command `/log on` or set as default in the ini-file
 - the current map can be switched using the menu

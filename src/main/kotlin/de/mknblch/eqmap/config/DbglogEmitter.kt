@@ -15,7 +15,7 @@ import java.time.Instant
 @Service
 class DbglogEmitter(
     @Value("\${eq_directory}") val eqDirectory: String,
-) : LogParser(File("$eqDirectory/Logs/dbg.txt")) {
+) : LogParser(File("$eqDirectory/dbg.txt")) {
 
     @Autowired
     private lateinit var applicationEventPublisher: ApplicationEventPublisher

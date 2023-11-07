@@ -37,12 +37,12 @@ class DirectoryWatcherService() {
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun buildTimerTask(eqDirectory: File) = timer.scheduleAtFixedRate(0, 3_000L) {
-        if (!Paths.get(eqDirectory.absolutePath, "/Logs/").exists()) {
-            logger.warn("eq_directory '${eqDirectory.absolutePath}/Logs/' not found!")
+        if (!Paths.get(eqDirectory.absolutePath).exists()) {
+            logger.warn("eq_directory '${eqDirectory.absolutePath}' not found!")
             return@scheduleAtFixedRate
         }
         this@DirectoryWatcherService.eqDirectory = eqDirectory
-        val newest = Files.list(Paths.get(eqDirectory.absolutePath, "/Logs/"))
+        val newest = Files.list(Paths.get(eqDirectory.absolutePath))
             .filter { it.isRegularFile() }
             .map { it.toFile() }
             .max(Comparator.comparing { it.lastModified() })
