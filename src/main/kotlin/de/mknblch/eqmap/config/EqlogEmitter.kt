@@ -30,6 +30,6 @@ class EqlogEmitter(
     }
 
     companion object {
-        private val lineRegex = Regex("\\[[a-zA-Z]+ [a-zA-Z]+ \\d+ ([^ ]+) \\d+\\] (.+)")
+        private val lineRegex = Regex("\\[[a-zA-Z]+ [a-zA-Z]+ \\d+ ([^ ]+) \\d+] (.+)")
     }
 }

@@ -86,7 +86,7 @@ class DirectoryWatcherService() {
 
     companion object {
 
-        private val FILE_REGEX = Regex("eqlog_([^_]+)_([^.]+)\\.txt")
+        private val FILE_REGEX = Regex("eqlog_([^_]+)_([^.]+)\\.proj\\.txt")
 
         private val logger: Logger = LoggerFactory.getLogger(DirectoryWatcherService::class.java)
     }
